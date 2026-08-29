@@ -1,0 +1,97 @@
+<odoo>
+    <record id="view_client_ticket_kanban" model="ir.ui.view">
+        <field name="name">client.ticket.kanban</field>
+        <field name="model">client.ticket</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state">
+                <field name="name"/>
+                <field name="ticket_ref"/>
+                <field name="partner_id"/>
+                <field name="assigned_to"/>
+                <field name="priority"/>
+                <field name="is_overdue"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="text-muted"><field name="ticket_ref"/></div>
+                            <strong><field name="name"/></strong>
+                            <div>
+                                <field name="partner_id"/>
+                            </div>
+                            <div t-if="record.assigned_to.value">
+                                Assigned: <field name="assigned_to"/>
+                            </div>
+                            <field name="priority" widget="priority"/>
+                            <div t-if="record.is_overdue.raw_value" class="text-danger">
+                                <strong>Overdue</strong>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_client_ticket_list" model="ir.ui.view">
+        <field name="name">client.ticket.list</field>
+        <field name="model">client.ticket</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="ticket_ref"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="assigned_to"/>
+                <field name="date_due"/>
+                <field name="priority" widget="priority"/>
+                <field name="is_overdue"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_client_ticket_form" model="ir.ui.view">
+        <field name="name">client.ticket.form</field>
+        <field name="model">client.ticket</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_assign" type="object" string="Assign"
+                            invisible="state != 'draft'" class="oe_highlight"/>
+                    <button name="action_start" type="object" string="Start"
+                            invisible="state != 'assigned'" class="oe_highlight"/>
+                    <button name="action_done" type="object" string="Mark Done"
+                            invisible="state != 'in_progress'" class="oe_highlight"/>
+                    <button name="action_reset_draft" type="object" string="Reset to Draft"
+                            invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,assigned,in_progress,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="ticket_ref" readonly="1"/>
+                        </h1>
+                        <field name="priority" widget="priority" class="oe_inline"/>
+                    </div>
+                    <group>
+                        <field name="name"/>
+                        <field name="partner_id"/>
+                        <field name="assigned_to"/>
+                        <field name="date_due"/>
+                        <field name="is_overdue" readonly="1"/>
+                        <field name="description"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_client_ticket" model="ir.actions.act_window">
+        <field name="name">Client Tickets</field>
+        <field name="res_model">client.ticket</field>
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+
+    <menuitem id="menu_client_ticket_root" name="Client Tickets"/>
+    <menuitem id="menu_client_ticket" name="Tickets" parent="menu_client_ticket_root" action="action_client_ticket"/>
+</odoo>
