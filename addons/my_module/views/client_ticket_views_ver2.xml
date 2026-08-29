@@ -1,0 +1,96 @@
+<odoo>
+    <record id="view_client_ticket_tree" model="ir.ui.view">
+        <field name="name">client.ticket.tree</field>
+        <field name="model">client.ticket</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="request_type"/>
+                <field name="require_date"/>
+                <field name="priority" widget="priority"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_client_ticket_form" model="ir.ui.view">
+        <field name="name">client.ticket.form</field>
+        <field name="model">client.ticket</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_submit" type="object" string="Submitted"
+                            invisible="state != 'draft'" class="oe_highlight"/>
+                    <button name="action_approve" type="object" string="Approved"
+                            invisible="state != 'submitted'" class="oe_highlight"/>
+                    <button name="action_assign" type="object" string="Assigned"
+                            invisible="state != 'approved'" class="oe_highlight"/>
+                    <button name="action_start" type="object" string="In Progress"
+                            invisible="state != 'assigned'" class="oe_highlight"/>
+                    <button name="action_complete" type="object" string="Completed"
+                            invisible="state != 'in_progress'" class="oe_highlight"/>
+                    <button name="action_close" type="object" string="Closed"
+                            invisible="state != 'completed'" class="oe_highlight"/>
+                    <button name="action_cancel" type="object" string="Cancel"
+                            invisible="state in ('closed', 'cancel')"/>
+                    <button name="action_reset_draft" type="object" string="Reset to Draft"
+                            invisible="state in ('draft', 'closed', 'cancel')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,assigned,in_progress,completed,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                        <field name="priority" widget="priority" class="oe_inline"/>
+                    </div>
+                    <group>
+                        <group string="Request Details">
+                            <field name="partner_id"/>
+                            <field name="request_type"/>
+                            <field name="product_type"/>
+                            <field name="phone"/>
+                            <field name="email"/>
+                            <field name="project_id"/>
+                            <field name="create_date" string="Created on" readonly="1"/>
+                        </group>
+                        <group string="Assignment">
+                            <field name="requester_id"/>
+                            <field name="design_manager_id"/>
+                            <field name="designer_id" invisible="state in ('draft', 'submitted')"/>
+                            <field name="require_date"/>
+                            <field name="is_overdue"/>
+                            <field name="boq_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description"/>
+                        </page>
+                        <page string="PHIS Reference">
+                            <field name="phis_reference"/>
+                        </page>
+                        <page string="AlHouse Reference">
+                            <field name="alhouse_reference"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_client_ticket" model="ir.actions.act_window">
+        <field name="name">Client Tickets</field>
+        <field name="res_model">client.ticket</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_client_ticket_root" name="Client Tickets"/>
+    <menuitem id="menu_client_ticket" name="Requests" parent="menu_client_ticket_root" action="action_client_ticket"/>
+</odoo>
