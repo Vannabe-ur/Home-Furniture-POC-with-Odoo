@@ -7,7 +7,7 @@
                 <field name="name"/>
                 <field name="ticket_ref"/>
                 <field name="partner_id"/>
-                <field name="assigned_to"/>
+                <field name="design_manager_id"/>
                 <field name="priority"/>
                 <field name="is_overdue"/>
                 <templates>
@@ -18,8 +18,8 @@
                             <div>
                                 <field name="partner_id"/>
                             </div>
-                            <div t-if="record.assigned_to.value">
-                                Assigned: <field name="assigned_to"/>
+                            <div t-if="record.design_manager_id.value">
+                                Assigned: <field name="design_manager_id"/>
                             </div>
                             <field name="priority" widget="priority"/>
                             <div t-if="record.is_overdue.raw_value" class="text-danger">
@@ -40,7 +40,7 @@
                 <field name="ticket_ref"/>
                 <field name="name"/>
                 <field name="partner_id"/>
-                <field name="assigned_to"/>
+                <field name="design_manager_id"/>
                 <field name="date_due"/>
                 <field name="priority" widget="priority"/>
                 <field name="is_overdue"/>
@@ -75,7 +75,7 @@
                     <group>
                         <field name="name"/>
                         <field name="partner_id"/>
-                        <field name="assigned_to"/>
+                        <field name="design_manager_id"/>
                         <field name="date_due"/>
                         <field name="is_overdue" readonly="1"/>
                         <field name="description"/>

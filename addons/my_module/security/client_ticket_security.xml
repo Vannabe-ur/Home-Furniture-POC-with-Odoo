@@ -32,7 +32,18 @@
     <record id="rule_client_ticket_user_own_tasks" model="ir.rule">
         <field name="name">Users: Own Client Tickets</field>
         <field name="model_id" ref="model_client_ticket"/>
-        <field name="domain_force">[('assigned_to', '=', user.id)]</field>
+        <field name="domain_force">
+            ['|',
+                ('requester_id', '=', user.id),
+                '|',
+                '&amp;',
+                ('design_manager_id', '=', user.id),
+                ('state', '!=', 'draft'),
+                '&amp;',
+                ('designer_id', '=', user.id),
+                ('state', 'in', ('approved','assigned', 'in_progress', 'completed', 'closed'))
+            ]
+        </field>
         <field name="groups"
                eval="[(4, ref('group_client_ticket_user'))]"/>
         <field name="perm_read" eval="True"/>

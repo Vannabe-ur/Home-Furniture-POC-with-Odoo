@@ -1,0 +1,125 @@
+<odoo>
+    <record id="action_report_client_ticket" model="ir.actions.report">
+        <field name="name">Ticket Summary</field>
+        <field name="model">client.ticket</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">my_module.report_client_ticket_template</field>
+        <field name="report_file">my_module.report_client_ticket_template</field>
+        <field name="print_report_name">'Ticket - %s' % (object.ticket_ref)</field>
+        <field name="binding_model_id" ref="model_client_ticket"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_client_ticket_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <style>
+                            .ticket-title { color: #2f5597; font-size: 25px; font-weight: 700; }
+                            .ticket-subtitle { color: #6c757d; font-size: 12px; }
+                            .ticket-section { background-color: #2f5597; color: white; padding: 7px 10px; margin-top: 18px; font-size: 14px; font-weight: 700; }
+                            .ticket-table { width: 100%; border: 1px solid #d9dee7; border-collapse: collapse; }
+                            .ticket-table td { padding: 7px 9px; border-bottom: 1px solid #e6e9ef; vertical-align: top; }
+                            .ticket-label { width: 24%; background-color: #f3f5f8; color: #495057; font-weight: 600; }
+                            .ticket-value { width: 26%; }
+                            .ticket-content { border: 1px solid #d9dee7; min-height: 70px; padding: 10px; white-space: pre-wrap; }
+                            .ticket-badge { background-color: #eaf1ff; color: #2f5597; padding: 4px 9px; font-weight: 600; }
+                        </style>
+
+                        <div class="row" style="border-bottom: 2px solid #2f5597; padding-bottom: 12px;">
+                            <div class="col-8">
+                                <div class="ticket-title">CLIENT SERVICE TICKET</div>
+                                <div class="ticket-subtitle">House project decoration request</div>
+                            </div>
+                            <div class="col-4 text-right">
+                                <div style="font-size: 18px; font-weight: 700;">
+                                    <span t-field="doc.ticket_ref"/>
+                                </div>
+                                <div class="ticket-subtitle">
+                                    Created: <span t-field="doc.create_date"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-6">
+                                <span class="ticket-badge">Status: <span t-field="doc.state"/></span>
+                            </div>
+                            <div class="col-6 text-right">
+                                <strong>Priority: </strong><span t-field="doc.priority"/>
+                            </div>
+                        </div>
+
+                        <div class="ticket-section">REQUEST DETAILS</div>
+                        <table class="ticket-table">
+                            <tbody>
+                                <tr>
+                                    <td class="ticket-label">Customer</td>
+                                    <td class="ticket-value"><span t-field="doc.partner_id"/></td>
+                                    <td class="ticket-label">Request Type</td>
+                                    <td class="ticket-value"><span t-field="doc.request_type"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="ticket-label">House / Product Type</td>
+                                    <td class="ticket-value"><span t-field="doc.product_type"/></td>
+                                    <td class="ticket-label">Project</td>
+                                    <td class="ticket-value"><span t-field="doc.project_id"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="ticket-label">Phone</td>
+                                    <td class="ticket-value"><span t-field="doc.phone"/></td>
+                                    <td class="ticket-label">Email</td>
+                                    <td class="ticket-value"><span t-field="doc.email"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="ticket-label">Required Date</td>
+                                    <td class="ticket-value"><span t-field="doc.require_date"/></td>
+                                    <td class="ticket-label">Overdue</td>
+                                    <td class="ticket-value"><span t-field="doc.is_overdue"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="ticket-section">ASSIGNMENT</div>
+                        <table class="ticket-table">
+                            <tbody>
+                                <tr>
+                                    <td class="ticket-label">Requester</td>
+                                    <td class="ticket-value"><span t-field="doc.requester_id"/></td>
+                                    <td class="ticket-label">Design Manager</td>
+                                    <td class="ticket-value"><span t-field="doc.design_manager_id"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="ticket-label">Designer</td>
+                                    <td class="ticket-value"><span t-field="doc.designer_id"/></td>
+                                    <td class="ticket-label">Related BoM</td>
+                                    <td class="ticket-value"><span t-field="doc.bom_id"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="ticket-section">DESCRIPTION</div>
+                        <div class="ticket-content">
+                            <span t-field="doc.description"/>
+                        </div>
+
+                        <div class="ticket-section">REFERENCES</div>
+                        <table class="ticket-table">
+                            <tbody>
+                                <tr>
+                                    <td class="ticket-label">PHIS Reference</td>
+                                    <td><span t-field="doc.phis_ref"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="ticket-label">AIHouse Reference</td>
+                                    <td><span t-field="doc.aihouse_ref"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

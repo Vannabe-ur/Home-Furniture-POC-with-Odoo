@@ -12,6 +12,7 @@
         'views/client_ticket_views_ver2.xml',
         'views/res_partner_views.xml',
         'data/client_ticket_cron.xml',
+        'report/client_ticket_report.xml',
     ],
     'installable': True,
     'application': True,

@@ -1,12 +1,34 @@
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 
 class ClientTicket(models.Model):
     _name = 'client.ticket'
+    _rec_name = 'ticket_ref'
     _description = 'Client Service Ticket'
     _inherit = ['mail.thread']
 
-    name = fields.Char(string="Reference", readonly=True, copy=False, default='New')
-    
+    ticket_ref = fields.Char(string="Ticket Reference", readonly=True, copy=False, default='New')
+
+    # Priority
+    priority = fields.Selection([
+        ('0', 'Low'),
+        ('1', 'Medium'),
+        ('2', 'High'),
+        ('3', 'Urgent'),
+    ], string="Priority", default='0')
+
+    # State workflow
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('approved', 'Approved'),
+        ('assigned', 'Assigned'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('closed', 'Closed'),
+        ('cancel', 'Cancelled'),
+    ], string="Status", default='draft', required=True)
+
     # --- Left column ---
     partner_id = fields.Many2one('res.partner', string="Customer", required=True)
     request_type = fields.Selection([
@@ -22,11 +44,11 @@ class ClientTicket(models.Model):
         ('garden', 'Backyard garden'),
         ('parking', 'Parking lot Area'),
     ], string="House / Product Type")
-    
+
     # Standalone stored fields (editable by user)
     phone = fields.Char(string="Phone")
     email = fields.Char(string="Email")
-    
+
     project_id = fields.Many2one('project.project', string="Project")
 
     # --- Auto-fill logic when partner_id changes ---
@@ -35,6 +57,8 @@ class ClientTicket(models.Model):
         if self.partner_id:
             self.phone = self.partner_id.phone
             self.email = self.partner_id.email
+        if self.partner_id and self.partner_id.user_id:
+            self.design_manager_id = self.partner_id.user_id
 
     # Right Column
     requester_id = fields.Many2one(
@@ -43,29 +67,9 @@ class ClientTicket(models.Model):
     )
     design_manager_id = fields.Many2one('res.users', string="Design Manager")
     designer_id = fields.Many2one('res.users', string="Designer")
-    require_date = fields.Date(string="Require Date")
+    require_date = fields.Datetime(string="Require Date")
     is_overdue = fields.Boolean(string="Overdue", compute='_compute_is_overdue', store=True)
     bom_id = fields.Many2one('mrp.production', string="Related BoM")
-
-    # Priority
-    priority = fields.Selection([
-        ('0', 'Low'),
-        ('1', 'Medium'),
-        ('2', 'High'),
-        ('3', 'Urgent'),
-    ], string="Priority", default='0')
-
-    # State workflow
-    state = fields.Selection([
-        ('draft', 'Draft'),
-        ('submitted', 'Submitted'),
-        ('approved', 'Approved')
-        ('assigned', 'Assigned'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-        ('closed', 'Closed'),
-        ('cancel', 'Cancelled')
-    ], string="Status", default='draft', required=True)
 
     # Tabs filed
     description = fields.Text(string="Description")
@@ -79,13 +83,22 @@ class ClientTicket(models.Model):
                 vals['ticket_ref'] = self.env['ir.sequence'].next_by_code('client.ticket') or 'New'
         return super().create(vals_list)
 
-    @api.depends('date_due', 'state')
+    @api.depends('require_date', 'state')
     def _compute_is_overdue(self):
-        now = fields.Datetime.now()
+        today = fields.Date.today()
+
         for rec in self:
-            rec.is_overdue = bool(
-                rec.date_due and rec.date_due < now and rec.state != 'done'
-            )
+            if rec.require_date:
+                due_date = fields.Datetime.to_datetime(
+                    rec.require_date
+                ).date()
+
+                rec.is_overdue = (
+                    due_date < today
+                    and rec.state not in ('completed', 'closed', 'cancel')
+                )
+            else:
+                rec.is_overdue = False
 
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
@@ -99,11 +112,40 @@ class ClientTicket(models.Model):
 
     def action_submitted(self):
         for rec in self:
+            if not rec.design_manager_id:
+                raise UserError(
+                    "Please select a Design Manager before submitting the ticket"
+                )
+            
             rec.state = 'submitted'
+            rec.message_post(
+                body=f"Ticket submitted for design Manager {rec.design_manager_id.name}"
+            )
 
     def action_approved(self):
         for rec in self:
+            if not rec.designer_id:
+                raise UserError(
+                    "Please select a Designer before approving the ticket."
+                )
+            approval_datetime = fields.Datetime.now()
             rec.state = 'approved'
+
+            approval_time = fields.Datetime.context_timestamp(
+                rec, approval_datetime
+            ).strftime('%Y-%m-d %H:%M:%S')
+            rec.state = 'approved'
+
+            rec.message_post(
+                body_html=(
+                    f"<p>Ticket approved and assigned to: </p>"
+                     f"<p>Designer: {rec.designer_id.name} </p>"
+                     f"<p>Approved at: {approval_time} | By: {rec.design_manager_id.name} </p>"
+                ),
+                message_type='comment',
+                subtype_xmlid='mail.mt_note',
+            )
+
 
     def action_assign(self):
         for rec in self:
@@ -116,6 +158,11 @@ class ClientTicket(models.Model):
 
     def action_complete(self):
         for rec in self:
+            if not rec.bom_id:
+                raise UserError(
+                    "Please complete the related BoM reference."
+                )
+            
             rec.state = 'completed'
 
     def action_close(self):
@@ -141,12 +188,12 @@ class ClientTicket(models.Model):
     def _send_assignment_email(self):
         self.ensure_one()
         self._send_ticket_email(
-            subject=f"New ticket assigned: {self.ticket_ref} - {self.name}",
+            subject=f"New ticket assigned: {self.ticket_ref}",
             body_html=(
                 f"<p>You have been assigned ticket "
-                f"<strong>{self.ticket_ref}</strong> (\"{self.name}\").</p>"
-                f"<p>Client: {self.partner_id.name}</p>"
-                f"<p>Due: {self.date_due or 'Not set'}</p>"
+                f"<strong>{self.ticket_ref}</strong></p>"
+                f"<p>Customer: {self.partner_id.name}</p>"
+                f"<p>Due: {self.require_date or 'Not set'}</p>"
             ),
             log_note=f"Assignment email sent to {self.design_manager_id.name} ({self.design_manager_id.email}).",
         )
@@ -156,7 +203,7 @@ class ClientTicket(models.Model):
         overdue = self.search([('is_overdue', '=', True)])
         for ticket in overdue:
             ticket.message_post(
-                body=f"This ticket is overdue (due {ticket.date_due})."
+                body=f"This ticket is overdue (due {ticket.require_date})."
             )
 
     @api.model
@@ -167,11 +214,10 @@ class ClientTicket(models.Model):
         ])
         for ticket in overdue:
             ticket._send_ticket_email(
-                subject=f"Overdue: {ticket.ticket_ref} - {ticket.name}",
+                subject=f"Overdue: {ticket.ticket_ref}",
                 body_html=(
-                    f"<p>Ticket <strong>{ticket.ticket_ref}</strong> "
-                    f"(\"{ticket.name}\") assigned to you is overdue "
-                    f"(due {ticket.date_due}).</p>"
+                    f"<p>Ticket <strong>{ticket.ticket_ref}</strong> assigned to you is overdue "
+                    f"(due {ticket.require_date}).</p>"
                     f"<p>Client: {ticket.partner_id.name}</p>"
                 ),
                 log_note=f"Overdue reminder emailed to {ticket.design_manager_id.name} ({ticket.design_manager_id.email}).",

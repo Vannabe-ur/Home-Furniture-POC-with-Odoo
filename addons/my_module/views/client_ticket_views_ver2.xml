@@ -1,16 +1,53 @@
 <odoo>
-    <record id="view_client_ticket_tree" model="ir.ui.view">
-        <field name="name">client.ticket.tree</field>
+    <record id="view_client_ticket_kanban" model="ir.ui.view">
+        <field name="name">client.ticket.kanban</field>
         <field name="model">client.ticket</field>
         <field name="arch" type="xml">
-            <tree>
-                <field name="name"/>
+            <kanban default_group_by="state">
+                <field name="ticket_ref"/>
+                <field name="partner_id"/>
+                <field name="design_manager_id"/>
+                <field name="priority"/>
+                <field name="is_overdue"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="text-muted"><field name="ticket_ref"/></div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong><field name="ticket_ref"/></strong>
+                                <field name="priority" widget="priority"/>
+                            </div>
+                            <div>
+                                <field name="partner_id"/>
+                            </div>
+                            <div t-if="record.design_manager_id.value">
+                                Assigned Manager: <field name="design_manager_id"/>
+                            </div>
+                            <div t-if="record.require_date.value">
+                                Required Date: <field name="require_date"/>
+                            </div>
+                            <div t-if="record.is_overdue.raw_value" class="text-danger">
+                                <strong>Overdue</strong>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_client_ticket_tree" model="ir.ui.view">
+        <field name="name">client.ticket.list</field>
+        <field name="model">client.ticket</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="ticket_ref"/>                
                 <field name="partner_id"/>
                 <field name="request_type"/>
                 <field name="require_date"/>
                 <field name="priority" widget="priority"/>
                 <field name="state"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -20,9 +57,9 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_submit" type="object" string="Submitted"
+                    <button name="action_submitted" type="object" string="Submitted"
                             invisible="state != 'draft'" class="oe_highlight"/>
-                    <button name="action_approve" type="object" string="Approved"
+                    <button name="action_approved" type="object" string="Approved"
                             invisible="state != 'submitted'" class="oe_highlight"/>
                     <button name="action_assign" type="object" string="Assigned"
                             invisible="state != 'approved'" class="oe_highlight"/>
@@ -33,7 +70,7 @@
                     <button name="action_close" type="object" string="Closed"
                             invisible="state != 'completed'" class="oe_highlight"/>
                     <button name="action_cancel" type="object" string="Cancel"
-                            invisible="state in ('closed', 'cancel')"/>
+                            invisible="state in ('closed', 'cancel')" class="btn-danger" confirm="Are you sure you want to cancel this ticket?"/>
                     <button name="action_reset_draft" type="object" string="Reset to Draft"
                             invisible="state in ('draft', 'closed', 'cancel')"/>
                     <field name="state" widget="statusbar"
@@ -42,7 +79,7 @@
                 <sheet>
                     <div class="oe_title">
                         <h1>
-                            <field name="name" readonly="1"/>
+                            <field name="ticket_ref" readonly="1"/>
                         </h1>
                         <field name="priority" widget="priority" class="oe_inline"/>
                     </div>
@@ -62,25 +99,22 @@
                             <field name="designer_id" invisible="state in ('draft', 'submitted')"/>
                             <field name="require_date"/>
                             <field name="is_overdue"/>
-                            <field name="boq_id"/>
+                            <field name="bom_id" readonly="state != 'in_progress'"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Description">
-                            <field name="description"/>
+                            <field name="description" placeholder="Add a description..."/>
                         </page>
                         <page string="PHIS Reference">
-                            <field name="phis_reference"/>
+                            <field name="phis_ref" placeholder="Enter PHIS reference..."/>
                         </page>
-                        <page string="AlHouse Reference">
-                            <field name="alhouse_reference"/>
+                        <page string="AIHouse Reference">
+                            <field name="aihouse_ref" placeholder="Enter AIHouse reference..."/>
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -88,7 +122,7 @@
     <record id="action_client_ticket" model="ir.actions.act_window">
         <field name="name">Client Tickets</field>
         <field name="res_model">client.ticket</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form,kanban</field>
     </record>
 
     <menuitem id="menu_client_ticket_root" name="Client Tickets"/>
