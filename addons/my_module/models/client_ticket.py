@@ -27,7 +27,22 @@ class ClientTicket(models.Model):
         ('completed', 'Completed'),
         ('closed', 'Closed'),
         ('cancel', 'Cancelled'),
-    ], string="Status", default='draft', required=True)
+    ], string="Status", default='draft', required=True, group_expand=True)
+
+    submitted_at = fields.Datetime(string="Submitted At", readonly=True, copy=False)
+    submitted_by = fields.Many2one('res.users', string="Submitted By", readonly=True, copy=False)
+    approved_at = fields.Datetime(string="Approved At", readonly=True, copy=False)
+    approved_by = fields.Many2one('res.users', string="Approved By", readonly=True, copy=False)
+    assigned_at = fields.Datetime(string="Assigned At", readonly=True, copy=False)
+    assigned_by = fields.Many2one('res.users', string="Assigned By", readonly=True, copy=False)
+    started_at = fields.Datetime(string="Started At", readonly=True, copy=False)
+    started_by = fields.Many2one('res.users', string="Started By", readonly=True, copy=False)
+    completed_at = fields.Datetime(string="Completed At", readonly=True, copy=False)
+    completed_by = fields.Many2one('res.users', string="Completed By", readonly=True, copy=False)
+    closed_at = fields.Datetime(string="Closed At", readonly=True, copy=False)
+    closed_by = fields.Many2one('res.users', string="Closed By", readonly=True, copy=False)
+    cancelled_at = fields.Datetime(string="Cancelled At", readonly=True, copy=False)
+    cancelled_by = fields.Many2one('res.users', string="Cancelled By", readonly=True, copy=False)
 
     # --- Left column ---
     partner_id = fields.Many2one('res.partner', string="Customer", required=True)
@@ -51,15 +66,6 @@ class ClientTicket(models.Model):
 
     project_id = fields.Many2one('project.project', string="Project")
 
-    # --- Auto-fill logic when partner_id changes ---
-    @api.onchange('partner_id')
-    def _onchange_partner_id(self):
-        if self.partner_id:
-            self.phone = self.partner_id.phone
-            self.email = self.partner_id.email
-        if self.partner_id and self.partner_id.user_id:
-            self.design_manager_id = self.partner_id.user_id
-
     # Right Column
     requester_id = fields.Many2one(
         'res.users', string="Requester",
@@ -71,7 +77,7 @@ class ClientTicket(models.Model):
     is_overdue = fields.Boolean(string="Overdue", compute='_compute_is_overdue', store=True)
     bom_id = fields.Many2one('mrp.production', string="Related BoM")
 
-    # Tabs filed
+    # Tabs field
     description = fields.Text(string="Description")
     phis_ref = fields.Text(string="PHIS Reference")
     aihouse_ref = fields.Text(string="AIHouse Reference")
@@ -82,6 +88,11 @@ class ClientTicket(models.Model):
             if vals.get('ticket_ref', 'New') == 'New':
                 vals['ticket_ref'] = self.env['ir.sequence'].next_by_code('client.ticket') or 'New'
         return super().create(vals_list)
+
+    def write(self, vals):
+        if any(ticket.state == 'closed' for ticket in self):
+            raise UserError("Closed tickets are locked and cannot be edited.")
+        return super().write(vals)
 
     @api.depends('require_date', 'state')
     def _compute_is_overdue(self):
@@ -102,8 +113,16 @@ class ClientTicket(models.Model):
 
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
-        # If this client has a linked user, default the ticket to them
-        if self.partner_id and self.partner_id.user_id:
+        if not self.partner_id:
+            self.phone = False
+            self.email = False
+            return
+
+        self.phone = self.partner_id.phone
+        self.email = self.partner_id.email
+
+        # If this customer has a linked user, use them as the default manager.
+        if self.partner_id.user_id:
             self.design_manager_id = self.partner_id.user_id
 
     def action_reset_draft(self):
@@ -112,90 +131,138 @@ class ClientTicket(models.Model):
 
     def action_submitted(self):
         for rec in self:
+            if rec.state != 'draft':
+                raise UserError("Only draft tickets can be submitted.")
             if not rec.design_manager_id:
                 raise UserError(
-                    "Please select a Design Manager before submitting the ticket"
+                    "Please select a Design Manager before submitting the ticket."
                 )
-            
-            rec.state = 'submitted'
+
+            rec.write({
+                'state': 'submitted',
+                'submitted_at': fields.Datetime.now(),
+                'submitted_by': self.env.user.id,
+            })
             rec.message_post(
-                body=f"Ticket submitted for design Manager {rec.design_manager_id.name}"
+                body=f"Ticket submitted to Design Manager {rec.design_manager_id.name}."
+            )
+            rec._send_template_email(
+                'my_module.mail_template_ticket_submitted',
+                rec.design_manager_id,
+                f"Notification email sent to Design Manager {rec.design_manager_id.name}.",
             )
 
     def action_approved(self):
         for rec in self:
-            if not rec.designer_id:
-                raise UserError(
-                    "Please select a Designer before approving the ticket."
-                )
+            if rec.state != 'submitted':
+                raise UserError("Only submitted tickets can be approved.")
             approval_datetime = fields.Datetime.now()
-            rec.state = 'approved'
+            rec.write({
+                'state': 'approved',
+                'approved_at': approval_datetime,
+                'approved_by': self.env.user.id,
+            })
 
             approval_time = fields.Datetime.context_timestamp(
                 rec, approval_datetime
-            ).strftime('%Y-%m-d %H:%M:%S')
-            rec.state = 'approved'
+            ).strftime('%Y-%m-%d %H:%M:%S')
 
             rec.message_post(
-                body_html=(
-                    f"<p>Ticket approved and assigned to: </p>"
-                     f"<p>Designer: {rec.designer_id.name} </p>"
-                     f"<p>Approved at: {approval_time} | By: {rec.design_manager_id.name} </p>"
+                body=(
+                    f"Ticket Approved at: {approval_time} | By: {self.env.user.name}"
                 ),
                 message_type='comment',
                 subtype_xmlid='mail.mt_note',
             )
-
-
+            
     def action_assign(self):
         for rec in self:
-            rec.state = 'assigned'
+            if rec.state != 'approved':
+                raise UserError("Only approved tickets can be assigned.")
+            if not rec.designer_id:
+                raise UserError(
+                    "Please select a Designer before assigning the ticket."
+                )
+            rec.write({
+                'state': 'assigned',
+                'assigned_at': fields.Datetime.now(),
+                'assigned_by': self.env.user.id,
+            })
             rec._send_assignment_email()
 
     def action_start(self):
         for rec in self:
-            rec.state = 'in_progress'
+            if rec.state != 'assigned':
+                raise UserError("Only assigned tickets can be started.")
+            rec.write({
+                'state': 'in_progress',
+                'started_at': fields.Datetime.now(),
+                'started_by': self.env.user.id,
+            })
 
     def action_complete(self):
         for rec in self:
+            if rec.state != 'in_progress':
+                raise UserError("Only tickets in progress can be completed.")
             if not rec.bom_id:
                 raise UserError(
                     "Please complete the related BoM reference."
                 )
             
-            rec.state = 'completed'
+            rec.write({
+                'state': 'completed',
+                'completed_at': fields.Datetime.now(),
+                'completed_by': self.env.user.id,
+            })
+            rec._send_template_email(
+                'my_module.mail_template_ticket_completed',
+                rec.design_manager_id,
+                f"Completion email sent to Design Manager {rec.design_manager_id.name}.",
+            )
 
     def action_close(self):
         for rec in self:
-            rec.state = 'closed'
+            if rec.state != 'completed':
+                raise UserError("Only completed tickets can be closed.")
+            rec.write({
+                'state': 'closed',
+                'closed_at': fields.Datetime.now(),
+                'closed_by': self.env.user.id,
+            })
 
     def action_cancel(self):
         for rec in self:
-            rec.state = 'cancel'
+            if rec.state in ('closed', 'cancel'):
+                raise UserError("This ticket cannot be cancelled.")
+            rec.write({
+                'state': 'cancel',
+                'cancelled_at': fields.Datetime.now(),
+                'cancelled_by': self.env.user.id,
+            })
 
-    def _send_ticket_email(self, subject, body_html, log_note=None):
+    def _send_template_email(self, template_xmlid, recipient, log_note=None):
         self.ensure_one()
-        if not self.design_manager_id.email:
+        if not recipient or not recipient.email:
+            if log_note:
+                self.message_post(
+                    body=f"{log_note} Email was not sent: no recipient email."
+                )
             return
-        self.env['mail.mail'].create({
-            'subject': subject,
-            'body_html': body_html,
-            'email_to': self.design_manager_id.email,
-        }).send()
+        template = self.env.ref(template_xmlid).sudo()
+        template.send_mail(
+            self.id,
+            force_send=True,
+            email_values={'email_to': recipient.email},
+        )
         if log_note:
             self.message_post(body=log_note)
 
     def _send_assignment_email(self):
         self.ensure_one()
-        self._send_ticket_email(
-            subject=f"New ticket assigned: {self.ticket_ref}",
-            body_html=(
-                f"<p>You have been assigned ticket "
-                f"<strong>{self.ticket_ref}</strong></p>"
-                f"<p>Customer: {self.partner_id.name}</p>"
-                f"<p>Due: {self.require_date or 'Not set'}</p>"
-            ),
-            log_note=f"Assignment email sent to {self.design_manager_id.name} ({self.design_manager_id.email}).",
+        self._send_template_email(
+            'my_module.mail_template_ticket_assigned',
+            self.designer_id,
+            f"Assignment email sent to Designer {self.designer_id.name}.",
         )
 
     @api.model
@@ -213,12 +280,8 @@ class ClientTicket(models.Model):
             ('design_manager_id', '!=', False),
         ])
         for ticket in overdue:
-            ticket._send_ticket_email(
-                subject=f"Overdue: {ticket.ticket_ref}",
-                body_html=(
-                    f"<p>Ticket <strong>{ticket.ticket_ref}</strong> assigned to you is overdue "
-                    f"(due {ticket.require_date}).</p>"
-                    f"<p>Client: {ticket.partner_id.name}</p>"
-                ),
-                log_note=f"Overdue reminder emailed to {ticket.design_manager_id.name} ({ticket.design_manager_id.email}).",
+            ticket._send_template_email(
+                'my_module.mail_template_ticket_overdue',
+                ticket.design_manager_id,
+                f"Overdue reminder emailed to {ticket.design_manager_id.name}.",
             )

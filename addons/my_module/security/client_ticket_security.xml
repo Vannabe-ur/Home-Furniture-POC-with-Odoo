@@ -20,45 +20,73 @@
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
-    <!-- Manager group -->
+    <!-- Design Manager group -->
     <record id="group_client_ticket_manager" model="res.groups">
-        <field name="name">Manager</field>
+        <field name="name">Design Manager</field>
         <field name="privilege_id" ref="privilege_client_ticket"/>
         <field name="implied_ids"
                eval="[(4, ref('group_client_ticket_user'))]"/>
     </record>
 
-    <!-- Users see only their assigned tasks -->
+    <!-- Designer group -->
+    <record id="group_client_ticket_designer" model="res.groups">
+        <field name="name">Designer</field>
+        <field name="privilege_id" ref="privilege_client_ticket"/>
+        <field name="sequence">20</field>
+        <field name="implied_ids"
+               eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Disable the old rule from earlier module versions. -->
     <record id="rule_client_ticket_user_own_tasks" model="ir.rule">
-        <field name="name">Users: Own Client Tickets</field>
+        <field name="name">Users: Legacy Client Ticket Rule</field>
+        <field name="model_id" ref="model_client_ticket"/>
+        <field name="active" eval="False"/>
+    </record>
+
+    <!-- Administrators can access every ticket -->
+    <record id="rule_client_ticket_admin_all" model="ir.rule">
+        <field name="name">Administrators: All Client Tickets</field>
+        <field name="model_id" ref="model_client_ticket"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups"
+               eval="[(4, ref('base.group_system'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Design Managers see submitted tickets assigned to them -->
+    <record id="rule_client_ticket_manager_all_tasks" model="ir.rule">
+        <field name="name">Design Managers: Assigned Tickets</field>
         <field name="model_id" ref="model_client_ticket"/>
         <field name="domain_force">
-            ['|',
-                ('requester_id', '=', user.id),
-                '|',
-                '&amp;',
-                ('design_manager_id', '=', user.id),
-                ('state', '!=', 'draft'),
-                '&amp;',
-                ('designer_id', '=', user.id),
-                ('state', 'in', ('approved','assigned', 'in_progress', 'completed', 'closed'))
-            ]
+            [('design_manager_id', '=', user.id),
+             ('state', 'in', ('submitted', 'approved', 'assigned', 'in_progress', 'completed', 'closed'))]
         </field>
         <field name="groups"
-               eval="[(4, ref('group_client_ticket_user'))]"/>
+               eval="[(4, ref('group_client_ticket_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Designers see approved and later tickets assigned to them -->
+    <record id="rule_client_ticket_designer_assigned" model="ir.rule">
+        <field name="name">Designers: Assigned Tickets</field>
+        <field name="model_id" ref="model_client_ticket"/>
+        <field name="domain_force">
+            [('designer_id', '=', user.id),
+             ('state', 'in', ('approved', 'assigned', 'in_progress', 'completed', 'closed'))]
+        </field>
+        <field name="groups"
+               eval="[(4, ref('group_client_ticket_designer'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="False"/>
-    </record>
-
-    <!-- Managers see all tasks -->
-    <record id="rule_client_ticket_manager_all_tasks" model="ir.rule">
-        <field name="name">Managers: All Client Tickets</field>
-        <field name="model_id" ref="model_client_ticket"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups"
-               eval="[(4, ref('group_client_ticket_manager'))]"/>
     </record>
 
 </odoo>

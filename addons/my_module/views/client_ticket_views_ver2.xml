@@ -1,4 +1,5 @@
 <odoo>
+    <!-- Kanban View-->
     <record id="view_client_ticket_kanban" model="ir.ui.view">
         <field name="name">client.ticket.kanban</field>
         <field name="model">client.ticket</field>
@@ -36,7 +37,8 @@
         </field>
     </record>
 
-    <record id="view_client_ticket_tree" model="ir.ui.view">
+    <!-- List (Tree) View -->
+    <record id="view_client_ticket_list" model="ir.ui.view">
         <field name="name">client.ticket.list</field>
         <field name="model">client.ticket</field>
         <field name="arch" type="xml">
@@ -51,6 +53,7 @@
         </field>
     </record>
 
+    <!-- Form View -->
     <record id="view_client_ticket_form" model="ir.ui.view">
         <field name="name">client.ticket.form</field>
         <field name="model">client.ticket</field>
@@ -77,40 +80,71 @@
                            statusbar_visible="draft,submitted,approved,assigned,in_progress,completed,closed"/>
                 </header>
                 <sheet>
+                    <widget name="web_ribbon"
+                            text="🔒 Closed"
+                            bg_color="text-bg-success"
+                            invisible="state != 'closed'"/>
+                    <widget name="web_ribbon"
+                            text="Cancelled"
+                            bg_color="text-bg-danger"
+                            invisible="state != 'cancel'"/>
                     <div class="oe_title">
                         <h1>
                             <field name="ticket_ref" readonly="1"/>
                         </h1>
-                        <field name="priority" widget="priority" class="oe_inline"/>
+                        <field name="priority" widget="priority" class="oe_inline"
+                               readonly="state == 'closed'"/>
                     </div>
                     <group>
                         <group string="Request Details">
-                            <field name="partner_id"/>
-                            <field name="request_type"/>
-                            <field name="product_type"/>
-                            <field name="phone"/>
-                            <field name="email"/>
-                            <field name="project_id"/>
+                            <field name="partner_id" readonly="state == 'closed'"/>
+                            <field name="request_type" readonly="state == 'closed'"/>
+                            <field name="product_type" readonly="state == 'closed'"/>
+                            <field name="phone" readonly="state == 'closed'"/>
+                            <field name="email" readonly="state == 'closed'"/>
+                            <field name="project_id" readonly="state == 'closed'"/>
                             <field name="create_date" string="Created on" readonly="1"/>
                         </group>
                         <group string="Assignment">
-                            <field name="requester_id"/>
-                            <field name="design_manager_id"/>
-                            <field name="designer_id" invisible="state in ('draft', 'submitted')"/>
-                            <field name="require_date"/>
+                            <field name="requester_id" readonly="state == 'closed'"/>
+                            <field name="design_manager_id" readonly="state == 'closed'"/>
+                            <field name="designer_id" invisible="state in ('draft', 'submitted')" readonly="state == 'closed'"/>
+                            <field name="require_date" readonly="state == 'closed'"/>
                             <field name="is_overdue"/>
-                            <field name="bom_id" readonly="state != 'in_progress'"/>
+                            <field name="bom_id" readonly="state != 'in_progress' or state == 'closed'"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Description">
-                            <field name="description" placeholder="Add a description..."/>
+                            <field name="description" placeholder="Add a description..." readonly="state == 'closed'"/>
                         </page>
                         <page string="PHIS Reference">
-                            <field name="phis_ref" placeholder="Enter PHIS reference..."/>
+                            <field name="phis_ref" placeholder="Enter PHIS reference..." readonly="state == 'closed'"/>
                         </page>
                         <page string="AIHouse Reference">
-                            <field name="aihouse_ref" placeholder="Enter AIHouse reference..."/>
+                            <field name="aihouse_ref" placeholder="Enter AIHouse reference..." readonly="state == 'closed'"/>
+                        </page>
+                        <page string="Audit History">
+                            <group string="Workflow History">
+                                <group>
+                                    <field name="submitted_at"/>
+                                    <field name="submitted_by"/>
+                                    <field name="approved_at"/>
+                                    <field name="approved_by"/>
+                                    <field name="assigned_at"/>
+                                    <field name="assigned_by"/>
+                                </group>
+                                <group>
+                                    <field name="started_at"/>
+                                    <field name="started_by"/>
+                                    <field name="completed_at"/>
+                                    <field name="completed_by"/>
+                                    <field name="closed_at"/>
+                                    <field name="closed_by"/>
+                                    <field name="cancelled_at"/>
+                                    <field name="cancelled_by"/>
+                                </group>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>
@@ -119,12 +153,57 @@
         </field>
     </record>
 
+    <!-- Calenda View -->
+    <record id="view_client_ticket_calendar" model="ir.ui.view">
+        <field name="name">client.ticket.calendar</field>
+        <field name="model">client.ticket</field>
+        <field name="arch" type="xml">
+            <calendar string="Client Tickets" date_start="require_date" color="priority">
+                <field name="priority"/>
+                <field name="ticket_ref"/>
+                <field name="partner_id"/>
+                <field name="create_date"/>
+                <field name="require_date"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Pivot table / Analytic View -->
+    <record id="view_client_ticket_pivot" model="ir.ui.view">
+        <field name="name">client.ticket.pivot</field>
+        <field name="model">client.ticket</field>
+        <field name="arch" type="xml">
+            <pivot string="Tickets Analysis" sample="1">
+                <field name="state" type="row"/>
+                <field name="design_manager_id" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Graph / Analytic View -->
+    <record id="view_client_ticket_graph" model="ir.ui.view">
+        <field name="name">client.ticket.graph</field>
+        <field name="model">client.ticket</field>
+        <field name="arch" type="xml">
+            <graph string="Client Tickets" type="pie" disable_linking="True">
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Window Action -->
     <record id="action_client_ticket" model="ir.actions.act_window">
         <field name="name">Client Tickets</field>
         <field name="res_model">client.ticket</field>
-        <field name="view_mode">list,form,kanban</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot,graph</field>
     </record>
-
-    <menuitem id="menu_client_ticket_root" name="Client Tickets"/>
-    <menuitem id="menu_client_ticket" name="Requests" parent="menu_client_ticket_root" action="action_client_ticket"/>
+    <!-- Menu Items -->
+    <menuitem id="menu_client_ticket_root"
+              name="Client Tickets"
+              groups="base.group_system,my_module.group_client_ticket_manager,my_module.group_client_ticket_designer"/>
+    <menuitem id="menu_client_ticket"
+              name="Requests"
+              parent="menu_client_ticket_root"
+              action="action_client_ticket"
+              groups="base.group_system,my_module.group_client_ticket_manager,my_module.group_client_ticket_designer"/>
 </odoo>
