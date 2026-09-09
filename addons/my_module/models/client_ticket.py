@@ -65,6 +65,11 @@ class ClientTicket(models.Model):
     email = fields.Char(string="Email")
 
     project_id = fields.Many2one('project.project', string="Project")
+    max_budget = fields.Monetary(string="Max. Budget")
+    currency_id = fields.Many2one(
+        'res.currency', string="Currency",
+        default=lambda self: self.env.company.currency_id, required=True,
+    )
 
     # Right Column
     requester_id = fields.Many2one(

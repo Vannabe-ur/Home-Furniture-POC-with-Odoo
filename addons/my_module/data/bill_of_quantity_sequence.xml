@@ -1,0 +1,9 @@
+<odoo>
+    <record id="seq_bill_of_quantity" model="ir.sequence">
+        <field name="name">Bill of Quantity</field>
+        <field name="code">client.bill_of_quantity</field>
+        <field name="prefix">BoQ/%(year)s/</field>
+        <field name="padding">5</field>
+        <field name="number_increment">1</field>
+    </record>
+</odoo>
