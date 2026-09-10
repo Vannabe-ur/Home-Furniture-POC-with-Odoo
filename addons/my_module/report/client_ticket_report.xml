@@ -93,8 +93,8 @@
                                 <tr>
                                     <td class="ticket-label">Designer</td>
                                     <td class="ticket-value"><span t-field="doc.designer_id"/></td>
-                                    <td class="ticket-label">Related BoM</td>
-                                    <td class="ticket-value"><span t-field="doc.bom_id"/></td>
+                                    <td class="ticket-label">Related BoQ</td>
+                                    <td class="ticket-value"><span t-field="doc.boq_id"/></td>
                                 </tr>
                             </tbody>
                         </table>

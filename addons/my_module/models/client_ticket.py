@@ -80,7 +80,15 @@ class ClientTicket(models.Model):
     designer_id = fields.Many2one('res.users', string="Designer")
     require_date = fields.Datetime(string="Require Date")
     is_overdue = fields.Boolean(string="Overdue", compute='_compute_is_overdue', store=True)
-    bom_id = fields.Many2one('mrp.production', string="Related BoM")
+    boq_id = fields.Many2one(
+        'client.bill_of_quantity', string="Related BoQ", ondelete='restrict',
+        domain="[('request_id', '=', id)]",
+    )
+    boq_ids = fields.One2many(
+        'client.bill_of_quantity', 'request_id', string="BoQs"
+    )
+    boq_count = fields.Integer(string="BoQ Count", compute='_compute_boq_count')
+    sale_order_count = fields.Integer(string="Sales", compute='_compute_sale_order_count')
 
     # Tabs field
     description = fields.Text(string="Description")
@@ -93,6 +101,39 @@ class ClientTicket(models.Model):
             if vals.get('ticket_ref', 'New') == 'New':
                 vals['ticket_ref'] = self.env['ir.sequence'].next_by_code('client.ticket') or 'New'
         return super().create(vals_list)
+
+    def _compute_boq_count(self):
+        for ticket in self:
+            ticket.boq_count = len(ticket.boq_ids)
+
+    def _compute_sale_order_count(self):
+        sale_order_model = self.env['sale.order']
+        for ticket in self:
+            ticket.sale_order_count = sale_order_model.search_count([
+                ('partner_id', '=', ticket.partner_id.id),
+            ]) if ticket.partner_id else 0
+
+    def action_view_boqs(self):
+        self.ensure_one()
+        return {
+            'name': 'BoQs',
+            'type': 'ir.actions.act_window',
+            'res_model': 'client.bill_of_quantity',
+            'view_mode': 'list,form',
+            'domain': [('request_id', '=', self.id)],
+            'context': {'default_request_id': self.id},
+        }
+
+    def action_view_sale_orders(self):
+        self.ensure_one()
+        return {
+            'name': 'Sales Orders',
+            'type': 'ir.actions.act_window',
+            'res_model': 'sale.order',
+            'view_mode': 'list,form',
+            'domain': [('partner_id', '=', self.partner_id.id)],
+            'context': {'default_partner_id': self.partner_id.id},
+        }
 
     def write(self, vals):
         if any(ticket.state == 'closed' for ticket in self):
@@ -209,9 +250,13 @@ class ClientTicket(models.Model):
         for rec in self:
             if rec.state != 'in_progress':
                 raise UserError("Only tickets in progress can be completed.")
-            if not rec.bom_id:
+            if not rec.boq_id:
                 raise UserError(
-                    "Please complete the related BoM reference."
+                    "Please select a related BoQ before completing the ticket."
+                )
+            if rec.boq_id.state not in ('approved', 'done'):
+                raise UserError(
+                    "The related BoQ must be Approved or Done before completing the ticket."
                 )
             
             rec.write({

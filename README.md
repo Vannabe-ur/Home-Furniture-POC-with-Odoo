@@ -110,3 +110,9 @@ Where Business Logic lives in Odoo code:
 - JSON-RPC / XML-RPC external API access
 
 - REST-style integrations (common in real client work)
+
+**RESTART:**
+
+```
+docker compose exec odoo odoo -d odoo-dev -u my_module --stop-after-init && docker compose restart odoo
+```

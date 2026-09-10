@@ -1,0 +1,120 @@
+<odoo>
+    <record id="action_report_bill_of_quantity_summary" model="ir.actions.report">
+        <field name="name">BoQ Summary</field>
+        <field name="model">client.bill_of_quantity</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">my_module.report_bill_of_quantity_summary</field>
+        <field name="report_file">my_module.report_bill_of_quantity_summary</field>
+        <field name="print_report_name">'BoQ Summary - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_client_bill_of_quantity"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_bill_of_quantity_summary">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <style>
+                            .boq-title { color: #2f5597; font-size: 25px; font-weight: 700; }
+                            .boq-subtitle { color: #6c757d; font-size: 12px; }
+                            .boq-section { background-color: #2f5597; color: white; padding: 7px 10px; margin-top: 18px; font-size: 14px; font-weight: 700; }
+                            .boq-table { width: 100%; border: 1px solid #d9dee7; border-collapse: collapse; }
+                            .boq-table th { background-color: #f3f5f8; color: #495057; font-weight: 600; }
+                            .boq-table th, .boq-table td { padding: 6px 7px; border: 1px solid #d9dee7; vertical-align: top; }
+                            .boq-label { width: 22%; background-color: #f3f5f8; color: #495057; font-weight: 600; }
+                            .boq-total { font-size: 15px; font-weight: 700; }
+                        </style>
+
+                        <div class="row" style="border-bottom: 2px solid #2f5597; padding-bottom: 12px;">
+                            <div class="col-8">
+                                <div class="boq-title">BILL OF QUANTITY SUMMARY</div>
+                                <div class="boq-subtitle">House project decoration design costing</div>
+                            </div>
+                            <div class="col-4 text-right">
+                                <div style="font-size: 18px; font-weight: 700;"><span t-field="doc.name"/></div>
+                                <div class="boq-subtitle">Created: <span t-field="doc.create_date"/></div>
+                            </div>
+                        </div>
+
+                        <div class="boq-section">BOQ DETAILS</div>
+                        <table class="boq-table">
+                            <tbody>
+                                <tr>
+                                    <td class="boq-label">Status</td><td><span t-field="doc.state"/></td>
+                                    <td class="boq-label">Request ID</td><td><span t-field="doc.request_id"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="boq-label">Version</td><td><span t-field="doc.version"/></td>
+                                    <td class="boq-label">Revision Date</td><td><span t-field="doc.revision_date"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="boq-label">Responsible</td><td><span t-field="doc.responsible_id"/></td>
+                                    <td class="boq-label">Design Manager</td><td><span t-field="doc.design_manager_id"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="boq-section">CUSTOMER DETAILS</div>
+                        <table class="boq-table">
+                            <tbody>
+                                <tr>
+                                    <td class="boq-label">Customer</td><td><span t-field="doc.partner_id"/></td>
+                                    <td class="boq-label">Project</td><td><span t-field="doc.project_id"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="boq-label">Phone</td><td><span t-field="doc.phone"/></td>
+                                    <td class="boq-label">Email</td><td><span t-field="doc.email"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="boq-label">House / Product Type</td><td><span t-field="doc.product_type"/></td>
+                                    <td class="boq-label">Max. Budget</td>
+                                    <td><span t-field="doc.max_budget" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="boq-section">BOQ ITEMS</div>
+                        <table class="boq-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th><th>Job Type</th><th>Product</th><th>Description</th>
+                                    <th class="text-right">Planned Qty</th><th>UoM</th>
+                                    <th class="text-right">Sale Price</th><th class="text-right">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="doc.line_ids" t-as="line">
+                                    <td><span t-field="line.date"/></td>
+                                    <td><span t-field="line.job_type"/></td>
+                                    <td><span t-field="line.product_id"/></td>
+                                    <td><span t-field="line.description"/></td>
+                                    <td class="text-right"><span t-field="line.quantity"/></td>
+                                    <td><span t-field="line.uom_id"/></td>
+                                    <td class="text-right"><span t-field="line.sale_price" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                    <td class="text-right"><span t-field="line.subtotal" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                </tr>
+                                <tr t-if="not doc.line_ids"><td colspan="8" class="text-center">No BoQ items.</td></tr>
+                            </tbody>
+                        </table>
+
+                        <div class="row" style="margin-top: 18px;">
+                            <div class="col-7"/>
+                            <div class="col-5">
+                                <table class="boq-table">
+                                    <tbody>
+                                        <tr><td>Materials Cost</td><td class="text-right"><span t-field="doc.total_materials_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
+                                        <tr><td>Service / Overhead Cost</td><td class="text-right"><span t-field="doc.total_service_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
+                                        <tr><td>Labor Cost</td><td class="text-right"><span t-field="doc.total_labor_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
+                                        <tr><td>Margin</td><td class="text-right"><span t-field="doc.margin" t-options='{"widget": "percentage"}'/></td></tr>
+                                        <tr class="boq-total"><td>Total Estimate Cost</td><td class="text-right"><span t-field="doc.total_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

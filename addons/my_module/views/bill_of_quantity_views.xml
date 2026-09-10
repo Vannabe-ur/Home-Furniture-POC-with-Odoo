@@ -1,4 +1,43 @@
 <odoo>
+    <record id="view_bill_of_quantity_kanban" model="ir.ui.view">
+        <field name="name">client.bill_of_quantity.kanban</field>
+        <field name="model">client.bill_of_quantity</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" default_order="revision_date desc">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="request_id"/>
+                <field name="responsible_id"/>
+                <field name="priority"/>
+                <field name="version"/>
+                <field name="revision_date"/>
+                <field name="total_cost"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong><field name="name"/></strong>
+                                <field name="priority" widget="priority"/>
+                            </div>
+                            <div class="text-muted"><field name="request_id"/></div>
+                            <div><field name="partner_id"/></div>
+                            <div t-if="record.responsible_id.value">
+                                Responsible: <field name="responsible_id"/>
+                            </div>
+                            <div class="mt-2">
+                                Version <field name="version"/> · Revision <field name="revision_date"/>
+                            </div>
+                            <div class="mt-1">
+                                <strong>Total Estimate Cost: <field name="total_cost"/></strong>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
     <record id="view_bill_of_quantity_list" model="ir.ui.view">
         <field name="name">client.bill_of_quantity.list</field>
         <field name="model">client.bill_of_quantity</field>
@@ -12,47 +51,102 @@
         </field>
     </record>
 
+    <record id="view_bill_of_quantity_calendar" model="ir.ui.view">
+        <field name="name">client.bill_of_quantity.calendar</field>
+        <field name="model">client.bill_of_quantity</field>
+        <field name="arch" type="xml">
+            <calendar string="BoQs" date_start="revision_date" color="state">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="request_id"/>
+                <field name="responsible_id"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_bill_of_quantity_pivot" model="ir.ui.view">
+        <field name="name">client.bill_of_quantity.pivot</field>
+        <field name="model">client.bill_of_quantity</field>
+        <field name="arch" type="xml">
+            <pivot string="BoQ Analysis" sample="1">
+                <field name="state" type="row"/>
+                <field name="responsible_id" type="col"/>
+                <field name="total_cost" type="measure"/>
+                <field name="total_materials_cost" type="measure"/>
+                <field name="total_service_cost" type="measure"/>
+                <field name="total_labor_cost" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
     <record id="view_bill_of_quantity_form" model="ir.ui.view">
         <field name="name">client.bill_of_quantity.form</field>
         <field name="model">client.bill_of_quantity</field>
         <field name="arch" type="xml">
             <form string="Bill of Quantities">
                 <header>
-                    <button name="action_submit" type="object" string="Submit" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_done" type="object" string="Done" class="oe_highlight" invisible="state != 'submitted'"/>
-                    <button name="action_cancel" type="object" string="Cancel" class="btn-danger" invisible="state in ('done', 'cancel')" confirm="Are you sure you want to cancel this BoQ?"/>
-                    <button name="action_reset_draft" type="object" string="Reset to Draft" invisible="state == 'draft'"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,done,cancel"/>
+                    <button name="%(action_report_bill_of_quantity_summary)d" type="action" string="Print Summary"/>
+                    <button name="action_submit" type="object" string="Submit" class="oe_highlight" invisible="state != 'draft' or version > 1"/>
+                    <button name="action_submit" type="object" string="Resubmit" class="oe_highlight" invisible="state != 'draft' or version &lt;= 1"/>
+                    <button name="action_approve" type="object" string="To Approve" class="oe_highlight" groups="base.group_system,my_module.group_client_ticket_manager" invisible="state != 'submitted'"/>
+                    <button name="action_reject" type="object" string="To Rejected" class="btn-danger" groups="base.group_system,my_module.group_client_ticket_manager" invisible="state != 'submitted'" confirm="Are you sure you want to reject this BoQ? Please make sure the rejection feedback is filled in."/>
+                    <button name="action_done" type="object" string="Done" class="oe_highlight" invisible="state != 'approved'"/>
+                    <button name="action_create_sale_quotation" type="object" string="Create Sale Quotation" class="oe_highlight" invisible="state != 'done'"/>
+                    <button name="action_cancel" type="object" string="Cancel" class="btn-danger" invisible="state in ('submitted', 'done', 'cancel')" confirm="Are you sure you want to cancel this BoQ?"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,done,cancel"/>
                 </header>
                 <sheet>
+                    <div name="button_box" class="oe_button_box">
+                        <button name="action_view_request" type="object" class="oe_stat_button" icon="fa-ticket">
+                            <span class="o_stat_text">Client Ticket</span>
+                        </button>
+                        <button name="action_view_sale_orders" type="object" class="oe_stat_button" icon="fa-usd" invisible="sale_order_count == 0">
+                            <field name="sale_order_count" widget="statinfo" string="Sales"/>
+                        </button>
+                    </div>
                     <div class="oe_title"><h1><field name="name" readonly="1"/></h1><field name="priority" widget="priority" class="oe_inline"/></div>
                     <group>
                         <group string="Request Details">
                             <field name="request_id" readonly="state != 'draft'"/><field name="partner_id"/>
-                            <field name="phone"/><field name="email"/><field name="project_id"/>
+                            <field name="phone"/><field name="email"/><field name="project_id"/><field name="require_date"/>
                             <field name="unit_code" readonly="state != 'draft'"/><field name="product_type"/>
                         </group>
                         <group string="BoQ Details">
                             <field name="create_date" string="Created on" readonly="1"/><field name="version" readonly="state != 'draft'"/>
                             <field name="revision_date" readonly="state != 'draft'"/><field name="responsible_id" readonly="state != 'draft'"/>
                             <field name="design_manager_id"/><field name="max_budget" readonly="state != 'draft'"/>
+                            <field name="quotation_template_id" readonly="state != 'draft'"/>
+                            <field name="rejection_feedback" invisible="state not in ('draft', 'submitted')" readonly="state != 'submitted'" placeholder="Manager feedback required when rejecting..."/>
                             <field name="currency_id" invisible="1"/><field name="attachment" filename="attachment_filename" readonly="state != 'draft'"/>
                             <field name="attachment_filename" invisible="1"/>
                         </group>
                     </group>
                     <notebook><page string="BoQ Items">
-                        <field name="line_ids" readonly="state == 'done'">
+                        <field name="line_ids" readonly="state not in ('draft', 'submitted')">
                             <list editable="bottom">
                                 <field name="date"/><field name="job_type"/><field name="product_id"/>
                                 <field name="description"/><field name="quantity" string="Planned Qty"/>
                                 <field name="uom_id"/><field name="sale_price"/><field name="subtotal" readonly="1"/>
                             </list>
                         </field>
+                    </page><page string="Audit History">
+                        <field name="history_ids" nolabel="1">
+                            <list create="0" edit="0" delete="0">
+                                <field name="changed_at" string="Changed On"/>
+                                <field name="event" string="Action"/>
+                                <field name="state"/>
+                                <field name="version"/>
+                                <field name="revision_date"/>
+                                <field name="changed_by"/>
+                                <field name="note"/>
+                            </list>
+                        </field>
                     </page></notebook>
                     <group class="oe_subtotal_footer oe_right">
                         <field name="margin" widget="percentage"/><field name="total_materials_cost"/>
                         <field name="total_service_cost"/><field name="total_labor_cost"/>
-                        <field name="total_cost" class="oe_subtotal_footer_separator"/>
+                        <field name="total_cost" string="Total Estimate Cost" class="oe_subtotal_footer_separator"/>
                     </group>
                 </sheet>
                 <chatter/>
@@ -61,7 +155,51 @@
     </record>
 
     <record id="action_bill_of_quantity" model="ir.actions.act_window">
-        <field name="name">BoQ</field><field name="res_model">client.bill_of_quantity</field><field name="view_mode">list,form</field>
+        <field name="name">BoQ</field><field name="res_model">client.bill_of_quantity</field>
+        <field name="view_mode">kanban,list,form,calendar,pivot</field>
+    </record>
+    <record id="view_sale_order_form_boq_link" model="ir.ui.view">
+        <field name="name">sale.order.form.boq.link</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='origin']" position="after">
+                <field name="boq_id" readonly="1"/>
+                <field name="client_ticket_id" readonly="1"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_boq" type="object" class="oe_stat_button" icon="fa-list-alt" invisible="not boq_id">
+                    <span class="o_stat_text">BoQ</span>
+                </button>
+                <button name="action_view_client_ticket" type="object" class="oe_stat_button" icon="fa-ticket" invisible="not client_ticket_id">
+                    <span class="o_stat_text">Client Ticket</span>
+                </button>
+            </xpath>
+            <xpath expr="//group[@name='sale_total']/field[@name='tax_totals']" position="replace">
+                <field name="tax_totals" widget="account-tax-totals-field" nolabel="1" readonly="1" invisible="boq_id"/>
+                <div name="boq_totals" class="oe_subtotal_footer oe_right" style="width: 100%; min-width: 360px;" invisible="not boq_id">
+                    <div class="text-end text-uppercase fw-bold mb-2">BILLING SUMMARY</div>
+                    <div class="d-flex justify-content-between align-items-center gap-5 mb-1">
+                        <span class="text-muted text-nowrap">Untaxed Amount:</span>
+                        <field name="boq_untaxed_amount" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1" readonly="1"/>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center gap-5 mb-1">
+                        <span class="text-muted text-nowrap">BoQ Margin (%):</span>
+                        <field name="boq_margin" widget="percentage" nolabel="1" readonly="1"/>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center gap-5 border-top pt-2 mt-2 fw-bold">
+                        <span class="text-nowrap">Total Estimate Cost:</span>
+                        <field name="boq_total_estimate_cost" widget="monetary" options="{'currency_field': 'currency_id'}" nolabel="1" readonly="1"/>
+                    </div>
+                </div>
+            </xpath>
+            <xpath expr="//group[@name='note_group']/group[1]" position="attributes">
+                <attribute name="colspan">2</attribute>
+            </xpath>
+            <xpath expr="//group[@name='note_group']/group[2]" position="attributes">
+                <attribute name="colspan">4</attribute>
+            </xpath>
+        </field>
     </record>
     <menuitem id="menu_bill_of_quantity" name="Bill of Quantities" parent="menu_client_ticket_root" action="action_bill_of_quantity" groups="base.group_system,my_module.group_client_ticket_manager,my_module.group_client_ticket_designer"/>
 </odoo>

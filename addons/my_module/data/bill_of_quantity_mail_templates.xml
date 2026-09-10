@@ -1,0 +1,58 @@
+<odoo>
+    <data noupdate="1">
+        <record id="mail_template_boq_submitted" model="mail.template">
+            <field name="name">BoQ: Submitted for Approval</field>
+            <field name="model_id" ref="model_client_bill_of_quantity"/>
+            <field name="email_from">{{ user.email_formatted or '' }}</field>
+            <field name="email_to">{{ object.design_manager_id.email or '' }}</field>
+            <field name="subject">BoQ requires approval: {{ object.name }}</field>
+            <field name="body_html" type="html">
+                <div>
+                    <p>A Bill of Quantity is waiting for your approval.</p>
+                    <p><strong>BoQ:</strong> <t t-out="object.name"/></p>
+                    <p><strong>Customer:</strong> <t t-out="object.partner_id.name"/></p>
+                    <p><strong>Version:</strong> <t t-out="object.version"/></p>
+                    <p>Please review the BoQ and approve or reject it.</p>
+                </div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <record id="mail_template_boq_approved" model="mail.template">
+            <field name="name">BoQ: Approved</field>
+            <field name="model_id" ref="model_client_bill_of_quantity"/>
+            <field name="email_from">{{ user.email_formatted or '' }}</field>
+            <field name="email_to">{{ object.responsible_id.email or '' }}</field>
+            <field name="subject">BoQ approved: {{ object.name }}</field>
+            <field name="body_html" type="html">
+                <div>
+                    <p>Your Bill of Quantity has been approved.</p>
+                    <p><strong>BoQ:</strong> <t t-out="object.name"/></p>
+                    <p><strong>Version:</strong> <t t-out="object.version"/></p>
+                    <p>You may continue processing it as Done.</p>
+                </div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <record id="mail_template_boq_rejected" model="mail.template">
+            <field name="name">BoQ: Rejected with Feedback</field>
+            <field name="model_id" ref="model_client_bill_of_quantity"/>
+            <field name="email_from">{{ user.email_formatted or '' }}</field>
+            <field name="email_to">{{ object.responsible_id.email or '' }}</field>
+            <field name="subject">BoQ needs revision: {{ object.name }} v{{ object.version }}</field>
+            <field name="body_html" type="html">
+                <div>
+                    <p>Your Bill of Quantity was rejected and returned to Draft for revision.</p>
+                    <p><strong>BoQ:</strong> <t t-out="object.name"/></p>
+                    <p><strong>New Version:</strong> <t t-out="object.version"/></p>
+                    <p><strong>Revision Date:</strong> <t t-out="object.revision_date"/></p>
+                    <p><strong>Manager Feedback:</strong></p>
+                    <p><t t-out="object.rejection_feedback"/></p>
+                    <p>Update the BoQ and resubmit it for approval.</p>
+                </div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+    </data>
+</odoo>

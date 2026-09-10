@@ -80,6 +80,14 @@
                            statusbar_visible="draft,submitted,approved,assigned,in_progress,completed,closed"/>
                 </header>
                 <sheet>
+                    <div name="button_box" class="oe_button_box">
+                        <button name="action_view_boqs" type="object" class="oe_stat_button" icon="fa-list-alt">
+                            <field name="boq_count" widget="statinfo" string="BoQs"/>
+                        </button>
+                        <button name="action_view_sale_orders" type="object" class="oe_stat_button" icon="fa-usd" invisible="not partner_id">
+                            <field name="sale_order_count" widget="statinfo" string="Sales"/>
+                        </button>
+                    </div>
                     <widget name="web_ribbon"
                             text="🔒 Closed"
                             bg_color="text-bg-success"
@@ -112,7 +120,7 @@
                             <field name="designer_id" invisible="state in ('draft', 'submitted')" readonly="state == 'closed'"/>
                             <field name="require_date" readonly="state == 'closed'"/>
                             <field name="is_overdue"/>
-                            <field name="bom_id" readonly="state != 'in_progress' or state == 'closed'"/>
+                            <field name="boq_id" readonly="state != 'in_progress' or state == 'closed'"/>
                         </group>
                     </group>
                     <notebook>

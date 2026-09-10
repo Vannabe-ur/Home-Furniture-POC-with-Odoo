@@ -14,6 +14,7 @@ class BillOfQuantity(models.Model):
     partner_id = fields.Many2one('res.partner', string='Customer', related='request_id.partner_id', store=True, readonly=True)
     phone = fields.Char(string='Phone', related='request_id.phone', readonly=True)
     email = fields.Char(string='Email', related='request_id.email', readonly=True)
+    require_date = fields.Datetime(string='Required Date', related='request_id.require_date', readonly=True)
     project_id = fields.Many2one('project.project', string='Project', related='request_id.project_id', store=True, readonly=True)
     unit_code = fields.Char(string='Unit Code')
     product_type = fields.Selection(related='request_id.product_type', string='House / Product Type', readonly=True)
@@ -28,16 +29,28 @@ class BillOfQuantity(models.Model):
     attachment_filename = fields.Char(string='Attachment Filename')
     state = fields.Selection([('draft', 'Draft'), 
                               ('submitted', 'Submitted'), 
+                              ('approved', 'Approved'),
                               ('done', 'Done'),
                               ('cancel', 'Cancelled')], 
-                              string='Status', default='draft', required=True, tracking=True)
+                              string='Status', default='draft', required=True, tracking=True, group_expand=True)
+    rejection_feedback = fields.Text(string='Rejection Feedback')
+    approved_at = fields.Datetime(string='Approved On', readonly=True, copy=False)
+    approved_by = fields.Many2one('res.users', string='Approved By', readonly=True, copy=False)
+    rejected_at = fields.Datetime(string='Rejected On', readonly=True, copy=False)
+    rejected_by = fields.Many2one('res.users', string='Rejected By', readonly=True, copy=False)
     
     line_ids = fields.One2many('client.bill_of_quantity.line', 'boq_id', string='BoQ Items', copy=True)
-    total_cost = fields.Monetary(string='Total Cost', compute='_compute_totals', store=True)
+    total_cost = fields.Monetary(string='Total Estimate Cost', compute='_compute_totals', store=True)
     total_materials_cost = fields.Monetary(string='Total Materials Cost', compute='_compute_totals', store=True)
     total_service_cost = fields.Monetary(string='Total Service / Overhead Cost', compute='_compute_totals', store=True)
     total_labor_cost = fields.Monetary(string='Total Labor Cost', compute='_compute_totals', store=True)
     margin = fields.Float(string='Margin (%)', default=0.0)
+    history_ids = fields.One2many(
+        'client.bill_of_quantity.history', 'boq_id', string='Audit History', readonly=True,
+    )
+    quotation_template_id = fields.Many2one('sale.order.template', string='Quotation Template')
+    sale_order_ids = fields.One2many('sale.order', 'boq_id', string='Sale Quotations', readonly=True)
+    sale_order_count = fields.Integer(string='Sales', compute='_compute_sale_order_count')
 
     @api.depends('line_ids.subtotal', 'line_ids.job_type', 'margin')
     def _compute_totals(self):
@@ -55,12 +68,19 @@ class BillOfQuantity(models.Model):
             # as a markup on the combined material, service, and labor costs.
             boq.total_cost = base_total * (1 + boq.margin)
 
+    def _compute_sale_order_count(self):
+        for boq in self:
+            boq.sale_order_count = len(boq.sale_order_ids)
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].next_by_code('client.bill_of_quantity') or 'New'
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        for boq in records:
+            boq._record_history('created')
+        return records
 
     @api.onchange('request_id')
     def _onchange_request_id(self):
@@ -74,22 +94,158 @@ class BillOfQuantity(models.Model):
                 raise UserError('Only draft BoQs can be submitted.')
             if not boq.line_ids:
                 raise UserError('Add at least one BoQ item before submitting.')
+            if not boq.design_manager_id:
+                raise UserError('Please select a Design Manager before submitting the BoQ.')
             boq.write({'state': 'submitted'})
+            boq._record_history('submitted')
+            boq._send_template_email('my_module.mail_template_boq_submitted', boq.design_manager_id)
+
+    def action_approve(self):
+        for boq in self:
+            if boq.state != 'submitted':
+                raise UserError('Only submitted BoQs can be approved.')
+            if boq.design_manager_id and self.env.user != boq.design_manager_id and not self.env.user.has_group('base.group_system'):
+                raise UserError('Only the assigned Design Manager can approve this BoQ.')
+            now = fields.Datetime.now()
+            boq.write({
+                'state': 'approved',
+                'approved_at': now,
+                'approved_by': self.env.user.id,
+            })
+            boq._record_history('approved')
+            boq._send_template_email('my_module.mail_template_boq_approved', boq.responsible_id)
+
+    def action_reject(self):
+        for boq in self:
+            if boq.state != 'submitted':
+                raise UserError('Only submitted BoQs can be rejected.')
+            if boq.design_manager_id and self.env.user != boq.design_manager_id and not self.env.user.has_group('base.group_system'):
+                raise UserError('Only the assigned Design Manager can reject this BoQ.')
+            if not boq.rejection_feedback:
+                raise UserError('Please enter rejection feedback before rejecting the BoQ.')
+            now = fields.Datetime.now()
+            new_version = boq.version + 1
+            boq.write({
+                'state': 'draft',
+                'version': new_version,
+                'revision_date': fields.Date.context_today(boq),
+                'rejected_at': now,
+                'rejected_by': self.env.user.id,
+            })
+            boq._record_history('rejected', boq.rejection_feedback)
+            boq._send_template_email('my_module.mail_template_boq_rejected', boq.responsible_id)
 
     def action_done(self):
         for boq in self:
-            if boq.state != 'submitted':
-                raise UserError('Only submitted BoQs can be marked done.')
+            if boq.state != 'approved':
+                raise UserError('Only approved BoQs can be marked done.')
             boq.write({'state': 'done'})
+            boq._record_history('done')
 
     def action_cancel(self):
         for boq in self:
             if boq.state in ('done', 'cancel'):
                 raise UserError('This BoQ cannot be cancelled.')
             boq.write({'state': 'cancel'})
+            boq._record_history('cancelled')
 
     def action_reset_draft(self):
-        self.write({'state': 'draft'})
+        for boq in self:
+            boq.write({'state': 'draft'})
+            boq._record_history('reset')
+
+    def action_view_request(self):
+        self.ensure_one()
+        return {
+            'name': 'Client Ticket',
+            'type': 'ir.actions.act_window',
+            'res_model': 'client.ticket',
+            'view_mode': 'form',
+            'res_id': self.request_id.id,
+        }
+
+    def action_view_sale_orders(self):
+        self.ensure_one()
+        return {
+            'name': 'Sales Orders',
+            'type': 'ir.actions.act_window',
+            'res_model': 'sale.order',
+            'view_mode': 'list,form',
+            'domain': [('boq_id', '=', self.id)],
+            'context': {
+                'default_partner_id': self.partner_id.id,
+                'default_boq_id': self.id,
+            },
+        }
+
+    def action_create_sale_quotation(self):
+        self.ensure_one()
+        if self.state != 'done':
+            raise UserError('A sale quotation can only be created when the BoQ is Done.')
+        if not self.partner_id:
+            raise UserError('Please select a customer before creating a sale quotation.')
+
+        existing_order = self.sale_order_ids.filtered(
+            lambda order: order.state in ('draft', 'sent')
+        )[:1]
+        if existing_order:
+            order = existing_order
+        else:
+            order = self.env['sale.order'].create({
+                'partner_id': self.partner_id.id,
+                'origin': self.request_id.ticket_ref,
+                'client_order_ref': self.name,
+                'boq_id': self.id,
+                'sale_order_template_id': self.quotation_template_id.id or False,
+                'pricelist_id': self.partner_id.property_product_pricelist.id,
+            })
+            for line in self.line_ids:
+                product = line.product_id
+                uom = (
+                    line.uom_id
+                    or (product and product.uom_id)
+                    or self.env.ref('uom.product_uom_unit', raise_if_not_found=False)
+                )
+                self.env['sale.order.line'].create({
+                    'order_id': order.id,
+                    'product_id': product.id or False,
+                    'product_uom_id': uom.id if uom else False,
+                    'product_uom_qty': line.quantity,
+                    'price_unit': line.sale_price,
+                    'name': line.description or (product.display_name if product else '/'),
+                })
+
+        return {
+            'name': 'Sale Quotation',
+            'type': 'ir.actions.act_window',
+            'res_model': 'sale.order',
+            'view_mode': 'form',
+            'res_id': order.id,
+        }
+
+    def _record_history(self, event, note=False):
+        self.ensure_one()
+        self.env['client.bill_of_quantity.history'].create({
+            'boq_id': self.id,
+            'event': event,
+            'state': self.state,
+            'version': self.version,
+            'revision_date': self.revision_date,
+            'changed_by': self.env.user.id,
+            'note': note or False,
+        })
+
+    def _send_template_email(self, template_xmlid, recipient):
+        self.ensure_one()
+        if not recipient or not recipient.email:
+            self.message_post(body='BoQ email was not sent because the recipient has no email address.')
+            return
+        template = self.env.ref(template_xmlid).sudo()
+        template.send_mail(
+            self.id,
+            force_send=True,
+            email_values={'email_to': recipient.email},
+        )
 
 
 class BillOfQuantityLine(models.Model):
@@ -120,3 +276,85 @@ class BillOfQuantityLine(models.Model):
             self.description = self.product_id.display_name
             self.uom_id = self.product_id.uom_id
             self.sale_price = self.product_id.lst_price
+
+
+class BillOfQuantityHistory(models.Model):
+    _name = 'client.bill_of_quantity.history'
+    _description = 'BoQ Audit History'
+    _order = 'changed_at desc, id desc'
+
+    boq_id = fields.Many2one('client.bill_of_quantity', string='BoQ', required=True, ondelete='cascade')
+    event = fields.Selection([
+        ('created', 'Created'),
+        ('submitted', 'Submitted for Approval'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('done', 'Done'),
+        ('cancelled', 'Cancelled'),
+        ('reset', 'Reset to Draft'),
+    ], string='Action', required=True)
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('approved', 'Approved'),
+        ('done', 'Done'),
+        ('cancel', 'Cancelled'),
+    ], string='State', readonly=True)
+    version = fields.Integer(string='Version', readonly=True)
+    revision_date = fields.Date(string='Revision Date', readonly=True)
+    changed_by = fields.Many2one('res.users', string='Changed By', readonly=True)
+    changed_at = fields.Datetime(string='Changed On', default=fields.Datetime.now, readonly=True)
+    note = fields.Text(string='Feedback / Note', readonly=True)
+
+
+class SaleOrder(models.Model):
+    _inherit = 'sale.order'
+
+    boq_id = fields.Many2one(
+        'client.bill_of_quantity', string='BoQ', ondelete='restrict', copy=False,
+    )
+    client_ticket_id = fields.Many2one(
+        'client.ticket', string='Design Request', related='boq_id.request_id',
+        store=True, readonly=True,
+    )
+    boq_margin = fields.Float(
+        string='BoQ Margin (%)', related='boq_id.margin', readonly=True,
+    )
+    boq_total_estimate_cost = fields.Monetary(
+        string='Total Estimate Cost', related='boq_id.total_cost', readonly=True,
+    )
+    boq_untaxed_amount = fields.Monetary(
+        string='BoQ Untaxed Amount', compute='_compute_boq_amounts', readonly=True,
+    )
+
+    @api.depends(
+        'boq_id', 'boq_id.total_materials_cost', 'boq_id.total_service_cost',
+        'boq_id.total_labor_cost',
+    )
+    def _compute_boq_amounts(self):
+        for order in self:
+            order.boq_untaxed_amount = (
+                order.boq_id.total_materials_cost
+                + order.boq_id.total_service_cost
+                + order.boq_id.total_labor_cost
+            ) if order.boq_id else 0.0
+
+    def action_view_boq(self):
+        self.ensure_one()
+        return {
+            'name': 'BoQ',
+            'type': 'ir.actions.act_window',
+            'res_model': 'client.bill_of_quantity',
+            'view_mode': 'form',
+            'res_id': self.boq_id.id,
+        }
+
+    def action_view_client_ticket(self):
+        self.ensure_one()
+        return {
+            'name': 'Client Ticket',
+            'type': 'ir.actions.act_window',
+            'res_model': 'client.ticket',
+            'view_mode': 'form',
+            'res_id': self.client_ticket_id.id,
+        }
