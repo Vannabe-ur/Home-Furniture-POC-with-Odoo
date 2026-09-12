@@ -99,7 +99,7 @@
                 <sheet>
                     <div name="button_box" class="oe_button_box">
                         <button name="action_view_request" type="object" class="oe_stat_button" icon="fa-ticket">
-                            <span class="o_stat_text">Client Ticket</span>
+                            <span class="o_stat_text">Design Request</span>
                         </button>
                         <button name="action_view_sale_orders" type="object" class="oe_stat_button" icon="fa-usd" invisible="sale_order_count == 0">
                             <field name="sale_order_count" widget="statinfo" string="Sales"/>
@@ -163,16 +163,16 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='origin']" position="after">
-                <field name="boq_id" readonly="1"/>
-                <field name="client_ticket_id" readonly="1"/>
+            <xpath expr="//group[@name='sale_header']/group[@name='order_details']/field[@name='payment_term_id']" position="after">
+                <field name="boq_id" string="BoQ" readonly="1" invisible="not boq_id"/>
+                <field name="client_ticket_id" string="Design Request" readonly="1" invisible="not client_ticket_id"/>
             </xpath>
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_view_boq" type="object" class="oe_stat_button" icon="fa-list-alt" invisible="not boq_id">
                     <span class="o_stat_text">BoQ</span>
                 </button>
                 <button name="action_view_client_ticket" type="object" class="oe_stat_button" icon="fa-ticket" invisible="not client_ticket_id">
-                    <span class="o_stat_text">Client Ticket</span>
+                    <span class="o_stat_text">Design Request</span>
                 </button>
             </xpath>
             <xpath expr="//group[@name='sale_total']/field[@name='tax_totals']" position="replace">

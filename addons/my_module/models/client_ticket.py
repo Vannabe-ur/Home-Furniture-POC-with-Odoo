@@ -4,10 +4,10 @@ from odoo.exceptions import UserError
 class ClientTicket(models.Model):
     _name = 'client.ticket'
     _rec_name = 'ticket_ref'
-    _description = 'Client Service Ticket'
+    _description = 'Design Request'
     _inherit = ['mail.thread']
 
-    ticket_ref = fields.Char(string="Ticket Reference", readonly=True, copy=False, default='New')
+    ticket_ref = fields.Char(string="Design Request ID", readonly=True, copy=False, default='New')
 
     # Priority
     priority = fields.Selection([
@@ -137,7 +137,7 @@ class ClientTicket(models.Model):
 
     def write(self, vals):
         if any(ticket.state == 'closed' for ticket in self):
-            raise UserError("Closed tickets are locked and cannot be edited.")
+            raise UserError("Closed design requests are locked and cannot be edited.")
         return super().write(vals)
 
     @api.depends('require_date', 'state')
@@ -178,10 +178,10 @@ class ClientTicket(models.Model):
     def action_submitted(self):
         for rec in self:
             if rec.state != 'draft':
-                raise UserError("Only draft tickets can be submitted.")
+                raise UserError("Only draft design requests can be submitted.")
             if not rec.design_manager_id:
                 raise UserError(
-                    "Please select a Design Manager before submitting the ticket."
+                    "Please select a Design Manager before submitting the design request."
                 )
 
             rec.write({
@@ -190,7 +190,7 @@ class ClientTicket(models.Model):
                 'submitted_by': self.env.user.id,
             })
             rec.message_post(
-                body=f"Ticket submitted to Design Manager {rec.design_manager_id.name}."
+                body=f"Design Request submitted to Design Manager {rec.design_manager_id.name}."
             )
             rec._send_template_email(
                 'my_module.mail_template_ticket_submitted',
@@ -201,7 +201,7 @@ class ClientTicket(models.Model):
     def action_approved(self):
         for rec in self:
             if rec.state != 'submitted':
-                raise UserError("Only submitted tickets can be approved.")
+                raise UserError("Only submitted design requests can be approved.")
             approval_datetime = fields.Datetime.now()
             rec.write({
                 'state': 'approved',
@@ -224,10 +224,10 @@ class ClientTicket(models.Model):
     def action_assign(self):
         for rec in self:
             if rec.state != 'approved':
-                raise UserError("Only approved tickets can be assigned.")
+                raise UserError("Only approved design requests can be assigned.")
             if not rec.designer_id:
                 raise UserError(
-                    "Please select a Designer before assigning the ticket."
+                    "Please select a Designer before assigning the design request."
                 )
             rec.write({
                 'state': 'assigned',
@@ -239,7 +239,7 @@ class ClientTicket(models.Model):
     def action_start(self):
         for rec in self:
             if rec.state != 'assigned':
-                raise UserError("Only assigned tickets can be started.")
+                raise UserError("Only assigned design requests can be started.")
             rec.write({
                 'state': 'in_progress',
                 'started_at': fields.Datetime.now(),
@@ -249,14 +249,14 @@ class ClientTicket(models.Model):
     def action_complete(self):
         for rec in self:
             if rec.state != 'in_progress':
-                raise UserError("Only tickets in progress can be completed.")
+                raise UserError("Only design requests in progress can be completed.")
             if not rec.boq_id:
                 raise UserError(
-                    "Please select a related BoQ before completing the ticket."
+                    "Please select a related BoQ before completing the design request."
                 )
             if rec.boq_id.state not in ('approved', 'done'):
                 raise UserError(
-                    "The related BoQ must be Approved or Done before completing the ticket."
+                    "The related BoQ must be Approved or Done before completing the design request."
                 )
             
             rec.write({
@@ -273,7 +273,7 @@ class ClientTicket(models.Model):
     def action_close(self):
         for rec in self:
             if rec.state != 'completed':
-                raise UserError("Only completed tickets can be closed.")
+                raise UserError("Only completed design requests can be closed.")
             rec.write({
                 'state': 'closed',
                 'closed_at': fields.Datetime.now(),
@@ -283,7 +283,7 @@ class ClientTicket(models.Model):
     def action_cancel(self):
         for rec in self:
             if rec.state in ('closed', 'cancel'):
-                raise UserError("This ticket cannot be cancelled.")
+                raise UserError("This design request cannot be cancelled.")
             rec.write({
                 'state': 'cancel',
                 'cancelled_at': fields.Datetime.now(),
@@ -320,7 +320,7 @@ class ClientTicket(models.Model):
         overdue = self.search([('is_overdue', '=', True)])
         for ticket in overdue:
             ticket.message_post(
-                body=f"This ticket is overdue (due {ticket.require_date})."
+                body=f"This design request is overdue (due {ticket.require_date})."
             )
 
     @api.model

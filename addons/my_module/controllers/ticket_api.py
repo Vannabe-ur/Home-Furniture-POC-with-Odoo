@@ -4,7 +4,7 @@ from odoo.http import request
 
 
 class ClientTicketApi(http.Controller):
-    """Authenticated JSON API for client.ticket records."""
+    """Authenticated JSON API for design.request records."""
 
     @staticmethod
     def _ticket_to_dict(ticket):
@@ -33,7 +33,7 @@ class ClientTicketApi(http.Controller):
         csrf=False,
     )
     def list_tickets(self, **params):
-        """Return tickets visible to the logged-in user."""
+        """Return design requests visible to the logged-in user."""
         domain = []
         if params.get('state'):
             domain.append(('state', '=', params['state']))
@@ -87,7 +87,7 @@ class ClientTicketApi(http.Controller):
 
         if ticket.state != 'draft':
             return request.make_json_response(
-                {'error': 'Only draft tickets can be edited'}, status=400
+                {'error': 'Only draft design requests can be edited'}, status=400
             )
 
         payload = request.httprequest.get_json(silent=True) or {}

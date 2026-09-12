@@ -2,13 +2,13 @@
 
     <!-- Category -->
     <record id="module_category_client_ticket" model="ir.module.category">
-        <field name="name">Client Ticket</field>
+        <field name="name">Design Request</field>
         <field name="sequence">30</field>
     </record>
 
     <!-- Privilege -->
     <record id="privilege_client_ticket" model="res.groups.privilege">
-        <field name="name">Client Ticket</field>
+        <field name="name">Design Request</field>
         <field name="category_id" ref="module_category_client_ticket"/>
         <field name="sequence">10</field>
     </record>
@@ -39,14 +39,14 @@
 
     <!-- Disable the old rule from earlier module versions. -->
     <record id="rule_client_ticket_user_own_tasks" model="ir.rule">
-        <field name="name">Users: Legacy Client Ticket Rule</field>
+        <field name="name">Users: Legacy Design Request Rule</field>
         <field name="model_id" ref="model_client_ticket"/>
         <field name="active" eval="False"/>
     </record>
 
-    <!-- Administrators can access every ticket -->
+    <!-- Administrators can access every design request -->
     <record id="rule_client_ticket_admin_all" model="ir.rule">
-        <field name="name">Administrators: All Client Tickets</field>
+        <field name="name">Administrators: All Design Requests</field>
         <field name="model_id" ref="model_client_ticket"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="groups"
@@ -57,9 +57,9 @@
         <field name="perm_unlink" eval="True"/>
     </record>
 
-    <!-- Design Managers see submitted tickets assigned to them -->
+    <!-- Design Managers see submitted design requests assigned to them -->
     <record id="rule_client_ticket_manager_all_tasks" model="ir.rule">
-        <field name="name">Design Managers: Assigned Tickets</field>
+        <field name="name">Design Managers: Assigned Design Requests</field>
         <field name="model_id" ref="model_client_ticket"/>
         <field name="domain_force">
             [('design_manager_id', '=', user.id),
@@ -73,9 +73,9 @@
         <field name="perm_unlink" eval="True"/>
     </record>
 
-    <!-- Designers see approved and later tickets assigned to them -->
+    <!-- Designers see approved and later design requests assigned to them -->
     <record id="rule_client_ticket_designer_assigned" model="ir.rule">
-        <field name="name">Designers: Assigned Tickets</field>
+        <field name="name">Designers: Assigned Design Requests</field>
         <field name="model_id" ref="model_client_ticket"/>
         <field name="domain_force">
             [('designer_id', '=', user.id),

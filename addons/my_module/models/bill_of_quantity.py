@@ -157,7 +157,7 @@ class BillOfQuantity(models.Model):
     def action_view_request(self):
         self.ensure_one()
         return {
-            'name': 'Client Ticket',
+            'name': 'Design Request',
             'type': 'ir.actions.act_window',
             'res_model': 'client.ticket',
             'view_mode': 'form',
@@ -352,7 +352,7 @@ class SaleOrder(models.Model):
     def action_view_client_ticket(self):
         self.ensure_one()
         return {
-            'name': 'Client Ticket',
+            'name': 'Design Request',
             'type': 'ir.actions.act_window',
             'res_model': 'client.ticket',
             'view_mode': 'form',

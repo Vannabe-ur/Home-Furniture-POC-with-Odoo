@@ -1,11 +1,11 @@
 <odoo>
     <record id="action_report_client_ticket" model="ir.actions.report">
-        <field name="name">Ticket Summary</field>
+        <field name="name">Design Request Summary</field>
         <field name="model">client.ticket</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">my_module.report_client_ticket_template</field>
         <field name="report_file">my_module.report_client_ticket_template</field>
-        <field name="print_report_name">'Ticket - %s' % (object.ticket_ref)</field>
+        <field name="print_report_name">'Design Request - %s' % (object.ticket_ref)</field>
         <field name="binding_model_id" ref="model_client_ticket"/>
         <field name="binding_type">report</field>
     </record>
@@ -29,7 +29,7 @@
 
                         <div class="row" style="border-bottom: 2px solid #2f5597; padding-bottom: 12px;">
                             <div class="col-8">
-                                <div class="ticket-title">CLIENT SERVICE TICKET</div>
+                                <div class="ticket-title">DESIGN REQUEST</div>
                                 <div class="ticket-subtitle">House project decoration request</div>
                             </div>
                             <div class="col-4 text-right">
@@ -104,19 +104,6 @@
                             <span t-field="doc.description"/>
                         </div>
 
-                        <div class="ticket-section">REFERENCES</div>
-                        <table class="ticket-table">
-                            <tbody>
-                                <tr>
-                                    <td class="ticket-label">PHIS Reference</td>
-                                    <td><span t-field="doc.phis_ref"/></td>
-                                </tr>
-                                <tr>
-                                    <td class="ticket-label">AIHouse Reference</td>
-                                    <td><span t-field="doc.aihouse_ref"/></td>
-                                </tr>
-                            </tbody>
-                        </table>
                     </div>
                 </t>
             </t>

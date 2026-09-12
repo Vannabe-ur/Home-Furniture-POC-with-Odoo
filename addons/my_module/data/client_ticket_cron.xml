@@ -1,6 +1,6 @@
 <odoo>
     <record id="ir_cron_notify_overdue_tickets" model="ir.cron">
-        <field name="name">Notify overdue client tickets</field>
+        <field name="name">Notify overdue design requests</field>
         <field name="model_id" ref="model_client_ticket"/>
         <field name="state">code</field>
         <field name="code">model._cron_notify_overdue()</field>
@@ -10,7 +10,7 @@
     </record>
 
     <record id="ir_cron_email_assigned_overdue" model="ir.cron">
-        <field name="name">Email assigned user for overdue tickets</field>
+        <field name="name">Email assigned user for overdue design requests</field>
         <field name="model_id" ref="model_client_ticket"/>
         <field name="state">code</field>
         <field name="code">model._cron_email_assigned_overdue()</field>

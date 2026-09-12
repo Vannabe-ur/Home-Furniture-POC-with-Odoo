@@ -87,11 +87,11 @@
     </record>
 
     <record id="action_client_ticket" model="ir.actions.act_window">
-        <field name="name">Client Tickets</field>
+        <field name="name">Design Requests</field>
         <field name="res_model">client.ticket</field>
         <field name="view_mode">kanban,list,form</field>
     </record>
 
-    <menuitem id="menu_client_ticket_root" name="Client Tickets"/>
-    <menuitem id="menu_client_ticket" name="Tickets" parent="menu_client_ticket_root" action="action_client_ticket"/>
+    <menuitem id="menu_client_ticket_root" name="Design Requests"/>
+    <menuitem id="menu_client_ticket" name="Design Requests" parent="menu_client_ticket_root" action="action_client_ticket"/>
 </odoo>

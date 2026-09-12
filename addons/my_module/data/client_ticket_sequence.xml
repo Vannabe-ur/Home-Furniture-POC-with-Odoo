@@ -1,6 +1,6 @@
 <odoo>
     <record id="seq_client_ticket" model="ir.sequence">
-        <field name="name">Client Ticket Reference</field>
+        <field name="name">Design Request Reference</field>
         <field name="code">client.ticket</field>
         <field name="prefix">CT/%(year)s/</field>
         <field name="padding">5</field>

@@ -73,7 +73,7 @@
                     <button name="action_close" type="object" string="Closed"
                             invisible="state != 'completed'" class="oe_highlight"/>
                     <button name="action_cancel" type="object" string="Cancel"
-                            invisible="state in ('closed', 'cancel')" class="btn-danger" confirm="Are you sure you want to cancel this ticket?"/>
+                            invisible="state in ('closed', 'cancel')" class="btn-danger" confirm="Are you sure you want to cancel this design request?"/>
                     <button name="action_reset_draft" type="object" string="Reset to Draft"
                             invisible="state in ('draft', 'closed', 'cancel')"/>
                     <field name="state" widget="statusbar"
@@ -127,12 +127,6 @@
                         <page string="Description">
                             <field name="description" placeholder="Add a description..." readonly="state == 'closed'"/>
                         </page>
-                        <page string="PHIS Reference">
-                            <field name="phis_ref" placeholder="Enter PHIS reference..." readonly="state == 'closed'"/>
-                        </page>
-                        <page string="AIHouse Reference">
-                            <field name="aihouse_ref" placeholder="Enter AIHouse reference..." readonly="state == 'closed'"/>
-                        </page>
                         <page string="Audit History">
                             <group string="Workflow History">
                                 <group>
@@ -167,7 +161,7 @@
         <field name="name">client.ticket.calendar</field>
         <field name="model">client.ticket</field>
         <field name="arch" type="xml">
-            <calendar string="Client Tickets" date_start="require_date" color="priority">
+            <calendar string="Design Requests" date_start="require_date" color="priority">
                 <field name="priority"/>
                 <field name="ticket_ref"/>
                 <field name="partner_id"/>
@@ -182,7 +176,7 @@
         <field name="name">client.ticket.pivot</field>
         <field name="model">client.ticket</field>
         <field name="arch" type="xml">
-            <pivot string="Tickets Analysis" sample="1">
+            <pivot string="Design Requests Analysis" sample="1">
                 <field name="state" type="row"/>
                 <field name="design_manager_id" type="col"/>
             </pivot>
@@ -194,7 +188,7 @@
         <field name="name">client.ticket.graph</field>
         <field name="model">client.ticket</field>
         <field name="arch" type="xml">
-            <graph string="Client Tickets" type="pie" disable_linking="True">
+            <graph string="Design Requests" type="pie" disable_linking="True">
                 <field name="state"/>
             </graph>
         </field>
@@ -202,16 +196,16 @@
 
     <!-- Window Action -->
     <record id="action_client_ticket" model="ir.actions.act_window">
-        <field name="name">Client Tickets</field>
+        <field name="name">Design Requests</field>
         <field name="res_model">client.ticket</field>
         <field name="view_mode">kanban,list,form,calendar,pivot,graph</field>
     </record>
     <!-- Menu Items -->
     <menuitem id="menu_client_ticket_root"
-              name="Client Tickets"
+              name="Design Requests"
               groups="base.group_system,my_module.group_client_ticket_manager,my_module.group_client_ticket_designer"/>
     <menuitem id="menu_client_ticket"
-              name="Requests"
+              name="Design Requests"
               parent="menu_client_ticket_root"
               action="action_client_ticket"
               groups="base.group_system,my_module.group_client_ticket_manager,my_module.group_client_ticket_designer"/>

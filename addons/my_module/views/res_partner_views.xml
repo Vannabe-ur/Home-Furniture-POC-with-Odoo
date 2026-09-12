@@ -7,7 +7,7 @@
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" type="object"
                         name="action_view_tickets" icon="fa-ticket">
-                    <field name="ticket_count" widget="statinfo" string="Tickets"/>
+                        <field name="ticket_count" widget="statinfo" string="Design Requests"/>
                 </button>
             </xpath>
         </field>
