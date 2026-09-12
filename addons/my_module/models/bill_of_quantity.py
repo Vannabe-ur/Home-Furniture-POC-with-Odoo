@@ -15,9 +15,8 @@ class BillOfQuantity(models.Model):
     phone = fields.Char(string='Phone', related='request_id.phone', readonly=True)
     email = fields.Char(string='Email', related='request_id.email', readonly=True)
     require_date = fields.Datetime(string='Required Date', related='request_id.require_date', readonly=True)
-    project_id = fields.Many2one('project.project', string='Project', related='request_id.project_id', store=True, readonly=True)
     unit_code = fields.Char(string='Unit Code')
-    product_type = fields.Selection(related='request_id.product_type', string='House / Product Type', readonly=True)
+    product_type = fields.Selection(related='request_id.product_type', string='Design Area', readonly=True)
     priority = fields.Selection(related='request_id.priority', string='Priority', readonly=True)
     version = fields.Integer(string='Version', default=1, required=True)
     revision_date = fields.Date(string='Revision Date', default=fields.Date.context_today, required=True)
@@ -85,7 +84,6 @@ class BillOfQuantity(models.Model):
     @api.onchange('request_id')
     def _onchange_request_id(self):
         if self.request_id:
-            self.unit_code = self.unit_code or self.request_id.project_id.name
             self.responsible_id = self.request_id.designer_id or self.env.user
 
     def action_submit(self):

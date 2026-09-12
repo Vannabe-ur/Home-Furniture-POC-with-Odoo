@@ -59,15 +59,14 @@
                         <table class="boq-table">
                             <tbody>
                                 <tr>
-                                    <td class="boq-label">Customer</td><td><span t-field="doc.partner_id"/></td>
-                                    <td class="boq-label">Project</td><td><span t-field="doc.project_id"/></td>
+                                    <td class="boq-label">Customer</td><td colspan="3"><span t-field="doc.partner_id"/></td>
                                 </tr>
                                 <tr>
                                     <td class="boq-label">Phone</td><td><span t-field="doc.phone"/></td>
                                     <td class="boq-label">Email</td><td><span t-field="doc.email"/></td>
                                 </tr>
                                 <tr>
-                                    <td class="boq-label">House / Product Type</td><td><span t-field="doc.product_type"/></td>
+                                    <td class="boq-label">Design Area</td><td><span t-field="doc.product_type"/></td>
                                     <td class="boq-label">Max. Budget</td>
                                     <td><span t-field="doc.max_budget" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
                                 </tr>

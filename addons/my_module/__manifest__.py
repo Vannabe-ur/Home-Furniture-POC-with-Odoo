@@ -1,10 +1,10 @@
 {
-    'name': 'My Module',
+    'name': 'Home Furniture Business',
     'version': '2.0',
     'summary': 'Manage house project decoration requests from clients',
     'category': 'Services',
     'author': 'Vanna',
-    'depends': ['base', 'mail', 'project', 'mrp', 'sale', 'sale_management'],
+    'depends': ['base', 'mail', 'project', 'mrp', 'sale', 'sale_management', 'website'],
     'data' : [
         'security/client_ticket_security.xml',
         'security/ir.model.access.csv',
@@ -18,7 +18,13 @@
         'data/client_ticket_cron.xml',
         'data/client_ticket_mail_templates.xml',
         'data/bill_of_quantity_mail_templates.xml',
+        'views/website_templates.xml',
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'my_module/static/src/css/furniture.css',
+        ],
+    },
     'installable': True,
     'application': True,
 }

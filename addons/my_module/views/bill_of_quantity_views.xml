@@ -109,8 +109,8 @@
                     <group>
                         <group string="Request Details">
                             <field name="request_id" readonly="state != 'draft'"/><field name="partner_id"/>
-                            <field name="phone"/><field name="email"/><field name="project_id"/><field name="require_date"/>
-                            <field name="unit_code" readonly="state != 'draft'"/><field name="product_type"/>
+                            <field name="phone"/><field name="email"/><field name="require_date"/>
+                            <field name="unit_code" readonly="state != 'draft'"/><field name="product_type" string="Design Area"/>
                         </group>
                         <group string="BoQ Details">
                             <field name="create_date" string="Created on" readonly="1"/><field name="version" readonly="state != 'draft'"/>

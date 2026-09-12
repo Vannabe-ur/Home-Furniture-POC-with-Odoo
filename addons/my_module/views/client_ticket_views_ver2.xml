@@ -107,10 +107,9 @@
                         <group string="Request Details">
                             <field name="partner_id" readonly="state == 'closed'"/>
                             <field name="request_type" readonly="state == 'closed'"/>
-                            <field name="product_type" readonly="state == 'closed'"/>
+                            <field name="product_type" string="Design Area" readonly="state == 'closed'"/>
                             <field name="phone" readonly="state == 'closed'"/>
                             <field name="email" readonly="state == 'closed'"/>
-                            <field name="project_id" readonly="state == 'closed'"/>
                             <field name="max_budget" readonly="state == 'closed'"/>
                             <field name="create_date" string="Created on" readonly="1"/>
                         </group>

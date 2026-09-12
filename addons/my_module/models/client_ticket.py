@@ -54,17 +54,20 @@ class ClientTicket(models.Model):
     product_type = fields.Selection([
         ('kitchen', 'Kitchen Area'),
         ('bathroom', 'Bathroom Area'),
-        ('livingroom', 'Livingroom Area'),
+        ('livingroom', 'Living Room Area'),
         ('pool', 'Swimming pool'),
         ('garden', 'Backyard garden'),
         ('parking', 'Parking lot Area'),
-    ], string="House / Product Type")
+    ], string="Design Area")
 
     # Standalone stored fields (editable by user)
     phone = fields.Char(string="Phone")
     email = fields.Char(string="Email")
 
     project_id = fields.Many2one('project.project', string="Project")
+    project_task_id = fields.Many2one(
+        'project.task', string="Project Task", readonly=True, copy=False,
+    )
     max_budget = fields.Monetary(string="Max. Budget")
     currency_id = fields.Many2one(
         'res.currency', string="Currency",
@@ -229,10 +232,27 @@ class ClientTicket(models.Model):
                 raise UserError(
                     "Please select a Designer before assigning the design request."
                 )
+            if not rec.project_id:
+                raise UserError(
+                    "A Project must be configured for this design request before assignment."
+                )
+            design_area = dict(
+                self._fields['product_type'].selection
+            ).get(rec.product_type, rec.product_type or 'Design Area')
+            task = rec.project_task_id
+            if not task:
+                task = self.env['project.task'].create({
+                    'name': f"{rec.ticket_ref} - {design_area}",
+                    'project_id': rec.project_id.id,
+                    'user_ids': [(6, 0, [rec.designer_id.id])],
+                    'partner_id': rec.partner_id.id,
+                    'description': rec.description or False,
+                })
             rec.write({
                 'state': 'assigned',
                 'assigned_at': fields.Datetime.now(),
                 'assigned_by': self.env.user.id,
+                'project_task_id': task.id,
             })
             rec._send_assignment_email()
 
