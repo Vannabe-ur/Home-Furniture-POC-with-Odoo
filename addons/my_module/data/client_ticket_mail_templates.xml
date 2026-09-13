@@ -71,5 +71,24 @@
             </field>
             <field name="auto_delete" eval="True"/>
         </record>
+
+        <record id="mail_template_ticket_deadline_reminder" model="mail.template">
+            <field name="name">Design Request: Deadline Reminder</field>
+            <field name="model_id" ref="model_client_ticket"/>
+            <field name="email_from">{{ user.email_formatted or '' }}</field>
+            <field name="subject">Design request deadline is tomorrow: {{ object.ticket_ref }}</field>
+            <field name="body_html" type="html">
+                <div>
+                    <p>This is a deadline reminder for an unfinished design request.</p>
+                    <p><strong>Design Request:</strong> <t t-out="object.ticket_ref"/></p>
+                    <p><strong>Customer:</strong> <t t-out="object.partner_id.name"/></p>
+                    <p><strong>Designer:</strong> <t t-out="object.designer_id.name or 'Not assigned'"/></p>
+                    <p><strong>Design Manager:</strong> <t t-out="object.design_manager_id.name or 'Not assigned'"/></p>
+                    <p><strong>Required date:</strong> <t t-out="object.require_date or 'Not set'"/></p>
+                    <p>Please complete or review this design request before the deadline.</p>
+                </div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
     </data>
 </odoo>

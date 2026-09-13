@@ -24,6 +24,12 @@
                             .boq-table th, .boq-table td { padding: 6px 7px; border: 1px solid #d9dee7; vertical-align: top; }
                             .boq-label { width: 22%; background-color: #f3f5f8; color: #495057; font-weight: 600; }
                             .boq-total { font-size: 15px; font-weight: 700; }
+                            .boq-summary { margin-top: 18px; margin-left: auto; width: 41.666667%; text-align: right; }
+                            .boq-summary-title { border-bottom: 1px solid #343a40; padding-bottom: 6px; margin-bottom: 8px; font-weight: 700; }
+                            .boq-summary-line { padding: 3px 0; }
+                            .boq-summary-label { display: inline-block; width: 70%; text-align: left; }
+                            .boq-summary-value { display: inline-block; width: 30%; text-align: right; }
+                            .boq-summary-total { border-top: 1px solid #d9dee7; margin-top: 5px; padding-top: 7px; font-size: 15px; font-weight: 700; }
                         </style>
 
                         <div class="row" style="border-bottom: 2px solid #2f5597; padding-bottom: 12px;">
@@ -66,7 +72,7 @@
                                     <td class="boq-label">Email</td><td><span t-field="doc.email"/></td>
                                 </tr>
                                 <tr>
-                                    <td class="boq-label">Design Area</td><td><span t-field="doc.product_type"/></td>
+                                    <td class="boq-label">Design Area</td><td><span t-field="doc.design_area"/></td>
                                     <td class="boq-label">Max. Budget</td>
                                     <td><span t-field="doc.max_budget" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
                                 </tr>
@@ -97,19 +103,13 @@
                             </tbody>
                         </table>
 
-                        <div class="row" style="margin-top: 18px;">
-                            <div class="col-7"/>
-                            <div class="col-5">
-                                <table class="boq-table">
-                                    <tbody>
-                                        <tr><td>Materials Cost</td><td class="text-right"><span t-field="doc.total_materials_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
-                                        <tr><td>Service / Overhead Cost</td><td class="text-right"><span t-field="doc.total_service_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
-                                        <tr><td>Labor Cost</td><td class="text-right"><span t-field="doc.total_labor_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
-                                        <tr><td>Margin</td><td class="text-right"><span t-field="doc.margin" t-options='{"widget": "percentage"}'/></td></tr>
-                                        <tr class="boq-total"><td>Total Estimate Cost</td><td class="text-right"><span t-field="doc.total_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="boq-summary">
+                            <div class="boq-summary-title">BILLING SUMMARY</div>
+                            <div class="boq-summary-line"><span class="boq-summary-label">Materials Cost:</span><span class="boq-summary-value"><span t-field="doc.total_materials_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></span></div>
+                            <div class="boq-summary-line"><span class="boq-summary-label">Service / Overhead Cost:</span><span class="boq-summary-value"><span t-field="doc.total_service_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></span></div>
+                            <div class="boq-summary-line"><span class="boq-summary-label">Labor Cost:</span><span class="boq-summary-value"><span t-field="doc.total_labor_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></span></div>
+                            <div class="boq-summary-line"><span class="boq-summary-label">Margin Cost:</span><span class="boq-summary-value"><span t-field="doc.margin_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></span></div>
+                            <div class="boq-summary-total"><span class="boq-summary-label">Total Cost:</span><span class="boq-summary-value"><span t-field="doc.total_cost" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></span></div>
                         </div>
                     </div>
                 </t>

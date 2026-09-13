@@ -116,3 +116,19 @@ Where Business Logic lives in Odoo code:
 ```
 docker compose exec odoo odoo -d odoo-dev -u my_module --stop-after-init && docker compose restart odoo
 ```
+
+---
+
+## Design Request Project Tasks
+
+When a manager assigns a Design Request, the module creates one task using the
+format `Design Request ID - Design Area`.
+
+The task is placed in the Project selected on the request. If no Project is
+selected, it automatically uses the Project matching the Request Type:
+
+- Interior Design → Interior Design
+- Exterior Design → Exterior Design
+- Outdoor Design → Outdoor Design
+
+The selected Project is stored on the request when assignment is completed.

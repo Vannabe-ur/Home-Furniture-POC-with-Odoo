@@ -62,7 +62,10 @@
         <field name="name">Design Managers: Assigned Design Requests</field>
         <field name="model_id" ref="model_client_ticket"/>
         <field name="domain_force">
-            [('design_manager_id', '=', user.id),
+            ['|',
+             ('state', '=', 'draft'),
+             '&amp;',
+             ('design_manager_id', '=', user.id),
              ('state', 'in', ('submitted', 'approved', 'assigned', 'in_progress', 'completed', 'closed'))]
         </field>
         <field name="groups"
@@ -85,6 +88,73 @@
                eval="[(4, ref('group_client_ticket_designer'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- BoQs follow the Design Request assignment. -->
+    <record id="rule_bill_of_quantity_manager_assigned" model="ir.rule">
+        <field name="name">Design Managers: BoQs for Assigned Requests</field>
+        <field name="model_id" ref="model_client_bill_of_quantity"/>
+        <field name="domain_force">[('request_id.design_manager_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_client_ticket_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_bill_of_quantity_designer_assigned" model="ir.rule">
+        <field name="name">Designers: BoQs for Assigned Requests</field>
+        <field name="model_id" ref="model_client_bill_of_quantity"/>
+        <field name="domain_force">[('request_id.designer_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_client_ticket_designer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_bill_of_quantity_line_manager_assigned" model="ir.rule">
+        <field name="name">Design Managers: BoQ Lines for Assigned Requests</field>
+        <field name="model_id" ref="model_client_bill_of_quantity_line"/>
+        <field name="domain_force">[('boq_id.request_id.design_manager_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_client_ticket_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_bill_of_quantity_line_designer_assigned" model="ir.rule">
+        <field name="name">Designers: BoQ Lines for Assigned Requests</field>
+        <field name="model_id" ref="model_client_bill_of_quantity_line"/>
+        <field name="domain_force">[('boq_id.request_id.designer_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_client_ticket_designer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_bill_of_quantity_history_manager_assigned" model="ir.rule">
+        <field name="name">Design Managers: BoQ History for Assigned Requests</field>
+        <field name="model_id" ref="model_client_bill_of_quantity_history"/>
+        <field name="domain_force">[('boq_id.request_id.design_manager_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_client_ticket_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_bill_of_quantity_history_designer_assigned" model="ir.rule">
+        <field name="name">Designers: BoQ History for Assigned Requests</field>
+        <field name="model_id" ref="model_client_bill_of_quantity_history"/>
+        <field name="domain_force">[('boq_id.request_id.designer_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_client_ticket_designer'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="False"/>
     </record>

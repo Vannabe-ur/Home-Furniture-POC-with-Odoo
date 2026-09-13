@@ -110,13 +110,12 @@
                         <group string="Request Details">
                             <field name="request_id" readonly="state != 'draft'"/><field name="partner_id"/>
                             <field name="phone"/><field name="email"/><field name="require_date"/>
-                            <field name="unit_code" readonly="state != 'draft'"/><field name="product_type" string="Design Area"/>
+                            <field name="design_area"/><field name="max_budget" readonly="state != 'draft'"/>
                         </group>
                         <group string="BoQ Details">
                             <field name="create_date" string="Created on" readonly="1"/><field name="version" readonly="state != 'draft'"/>
                             <field name="revision_date" readonly="state != 'draft'"/><field name="responsible_id" readonly="state != 'draft'"/>
-                            <field name="design_manager_id"/><field name="max_budget" readonly="state != 'draft'"/>
-                            <field name="quotation_template_id" readonly="state != 'draft'"/>
+                            <field name="design_manager_id"/>
                             <field name="rejection_feedback" invisible="state not in ('draft', 'submitted')" readonly="state != 'submitted'" placeholder="Manager feedback required when rejecting..."/>
                             <field name="currency_id" invisible="1"/><field name="attachment" filename="attachment_filename" readonly="state != 'draft'"/>
                             <field name="attachment_filename" invisible="1"/>

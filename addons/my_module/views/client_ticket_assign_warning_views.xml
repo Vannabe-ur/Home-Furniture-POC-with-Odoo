@@ -1,0 +1,20 @@
+<odoo>
+    <record id="view_client_ticket_assign_warning_form" model="ir.ui.view">
+        <field name="name">client.ticket.assign.warning.form</field>
+        <field name="model">client.ticket.assign.warning</field>
+        <field name="arch" type="xml">
+            <form string="Assignment Warning">
+                <sheet>
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Designer scheduling conflict</strong>
+                    </div>
+                    <field name="message" nolabel="1" readonly="1" widget="text"/>
+                </sheet>
+                <footer>
+                    <button name="action_assign_anyway" type="object" string="Assign Anyway" class="btn-primary"/>
+                    <button name="action_cancel" type="object" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

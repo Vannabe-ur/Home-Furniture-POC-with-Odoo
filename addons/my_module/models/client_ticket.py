@@ -1,5 +1,72 @@
+from datetime import timedelta
+
 from odoo import models, fields, api
 from odoo.exceptions import UserError
+
+DESIGN_AREA_SELECTION = [
+    ('living_room', 'Living Room'),
+    ('bedroom', 'Bedroom'),
+    ('kitchen', 'Kitchen'),
+    ('bathroom', 'Bathroom'),
+    ('dining_room', 'Dining Room'),
+    ('home_office', 'Home Office'),
+    ('facade', 'Facade'),
+    ('entrance', 'Entrance'),
+    ('balcony_terrace', 'Balcony / Terrace'),
+    ('parking_area', 'Parking Area'),
+    ('backyard_garden', 'Backyard / Garden'),
+    ('swimming_pool', 'Swimming Pool'),
+    ('patio_outdoor_living', 'Patio / Outdoor Living Area'),
+    ('entrance_foyer', 'Entrance / Foyer'),
+    ('building_facade', 'Building Facade'),
+    ('main_entrance', 'Main Entrance'),
+    ('rooftop', 'Rooftop'),
+    ('exterior_walls', 'Exterior Walls'),
+    ('patio', 'Patio'),
+    ('outdoor_living_area', 'Outdoor Living Area'),
+    ('outdoor_dining_area', 'Outdoor Dining Area'),
+    ('outdoor_kitchen', 'Outdoor Kitchen'),
+    ('landscape_area', 'Landscape Area'),
+]
+
+INTERIOR_DESIGN_AREA_SELECTION = [
+    ('living_room', 'Living Room'),
+    ('bedroom', 'Bedroom'),
+    ('kitchen', 'Kitchen'),
+    ('dining_room', 'Dining Room'),
+    ('bathroom', 'Bathroom'),
+    ('home_office', 'Home Office'),
+    ('entrance_foyer', 'Entrance / Foyer'),
+]
+
+EXTERIOR_DESIGN_AREA_SELECTION = [
+    ('building_facade', 'Building Facade'),
+    ('main_entrance', 'Main Entrance'),
+    ('balcony_terrace', 'Balcony / Terrace'),
+    ('rooftop', 'Rooftop'),
+    ('exterior_walls', 'Exterior Walls'),
+    ('parking_area', 'Parking Area'),
+]
+
+OUTDOOR_DESIGN_AREA_SELECTION = [
+    ('backyard_garden', 'Backyard / Garden'),
+    ('swimming_pool', 'Swimming Pool'),
+    ('patio', 'Patio'),
+    ('outdoor_living_area', 'Outdoor Living Area'),
+    ('outdoor_dining_area', 'Outdoor Dining Area'),
+    ('outdoor_kitchen', 'Outdoor Kitchen'),
+    ('landscape_area', 'Landscape Area'),
+]
+
+LEGACY_DESIGN_AREA_MAP = {
+    'livingroom': 'living_room',
+    'pool': 'swimming_pool',
+    'garden': 'backyard_garden',
+    'parking': 'parking_area',
+    'entrance': 'entrance_foyer',
+    'facade': 'building_facade',
+    'patio_outdoor_living': 'outdoor_living_area',
+}
 
 class ClientTicket(models.Model):
     _name = 'client.ticket'
@@ -51,14 +118,76 @@ class ClientTicket(models.Model):
         ('exterior', 'Exterior Design'),
         ('outdoor', 'Outdoor Design'),
     ], string="Request Type", required=True)
-    product_type = fields.Selection([
-        ('kitchen', 'Kitchen Area'),
-        ('bathroom', 'Bathroom Area'),
-        ('livingroom', 'Living Room Area'),
-        ('pool', 'Swimming pool'),
-        ('garden', 'Backyard garden'),
-        ('parking', 'Parking lot Area'),
-    ], string="Design Area")
+    # Kept as a storage alias so existing records and integrations survive the
+    # field rename. New screens and code use design_area.
+    product_type = fields.Selection(
+        DESIGN_AREA_SELECTION + [
+            ('livingroom', 'Living Room Area'),
+            ('pool', 'Swimming pool'),
+            ('garden', 'Backyard garden'),
+            ('parking', 'Parking lot Area'),
+        ], string="Legacy Design Area", copy=True,
+    )
+    design_area = fields.Selection(
+        DESIGN_AREA_SELECTION,
+        string="Design Area",
+    )
+    interior_design_area = fields.Selection(
+        INTERIOR_DESIGN_AREA_SELECTION,
+        string='Interior Design Area',
+        compute='_compute_category_design_areas',
+        inverse='_inverse_interior_design_area',
+    )
+    exterior_design_area = fields.Selection(
+        EXTERIOR_DESIGN_AREA_SELECTION,
+        string='Exterior Design Area',
+        compute='_compute_category_design_areas',
+        inverse='_inverse_exterior_design_area',
+    )
+    outdoor_design_area = fields.Selection(
+        OUTDOOR_DESIGN_AREA_SELECTION,
+        string='Outdoor Design Area',
+        compute='_compute_category_design_areas',
+        inverse='_inverse_outdoor_design_area',
+    )
+    @api.depends('request_type', 'design_area')
+    def _compute_category_design_areas(self):
+        for rec in self:
+            rec.interior_design_area = rec.design_area if rec.request_type == 'interior' else False
+            rec.exterior_design_area = rec.design_area if rec.request_type == 'exterior' else False
+            rec.outdoor_design_area = rec.design_area if rec.request_type == 'outdoor' else False
+
+    def _inverse_interior_design_area(self):
+        for rec in self:
+            rec.design_area = rec.interior_design_area
+
+    def _inverse_exterior_design_area(self):
+        for rec in self:
+            rec.design_area = rec.exterior_design_area
+
+    def _inverse_outdoor_design_area(self):
+        for rec in self:
+            rec.design_area = rec.outdoor_design_area
+
+    @api.onchange('request_type')
+    def _onchange_request_type(self):
+        area_types = {
+            'interior': {
+                'living_room', 'bedroom', 'kitchen', 'bathroom',
+                'dining_room', 'home_office', 'entrance_foyer',
+            },
+            'exterior': {
+                'building_facade', 'main_entrance', 'balcony_terrace',
+                'rooftop', 'exterior_walls', 'parking_area',
+            },
+            'outdoor': {
+                'backyard_garden', 'swimming_pool', 'patio',
+                'outdoor_living_area', 'outdoor_dining_area',
+                'outdoor_kitchen', 'landscape_area',
+            },
+        }
+        if self.design_area and self.design_area not in area_types.get(self.request_type, set()):
+            self.design_area = False
 
     # Standalone stored fields (editable by user)
     phone = fields.Char(string="Phone")
@@ -103,6 +232,8 @@ class ClientTicket(models.Model):
         for vals in vals_list:
             if vals.get('ticket_ref', 'New') == 'New':
                 vals['ticket_ref'] = self.env['ir.sequence'].next_by_code('client.ticket') or 'New'
+            if vals.get('design_area'):
+                vals['product_type'] = vals['design_area']
         return super().create(vals_list)
 
     def _compute_boq_count(self):
@@ -113,8 +244,8 @@ class ClientTicket(models.Model):
         sale_order_model = self.env['sale.order']
         for ticket in self:
             ticket.sale_order_count = sale_order_model.search_count([
-                ('partner_id', '=', ticket.partner_id.id),
-            ]) if ticket.partner_id else 0
+                ('client_ticket_id', '=', ticket.id),
+            ])
 
     def action_view_boqs(self):
         self.ensure_one()
@@ -134,13 +265,15 @@ class ClientTicket(models.Model):
             'type': 'ir.actions.act_window',
             'res_model': 'sale.order',
             'view_mode': 'list,form',
-            'domain': [('partner_id', '=', self.partner_id.id)],
-            'context': {'default_partner_id': self.partner_id.id},
+            'domain': [('client_ticket_id', '=', self.id)],
+            'context': {'default_client_ticket_id': self.id},
         }
 
     def write(self, vals):
         if any(ticket.state == 'closed' for ticket in self):
             raise UserError("Closed design requests are locked and cannot be edited.")
+        if vals.get('design_area'):
+            vals = dict(vals, product_type=vals['design_area'])
         return super().write(vals)
 
     @api.depends('require_date', 'state')
@@ -232,13 +365,57 @@ class ClientTicket(models.Model):
                 raise UserError(
                     "Please select a Designer before assigning the design request."
                 )
-            if not rec.project_id:
+            project = rec.project_id
+            if not project:
+                project_xmlids = {
+                    'interior': 'my_module.project_interior_design',
+                    'exterior': 'my_module.project_exterior_design',
+                    'outdoor': 'my_module.project_outdoor_design',
+                }
+                project = self.env.ref(
+                    project_xmlids.get(rec.request_type), raise_if_not_found=False
+                ) if rec.request_type else self.env['project.project'].browse()
+            if not project:
                 raise UserError(
-                    "A Project must be configured for this design request before assignment."
+                    "Please select a Project for this design request before assignment."
                 )
-            design_area = dict(
-                self._fields['product_type'].selection
-            ).get(rec.product_type, rec.product_type or 'Design Area')
+            if not self.env.context.get('skip_assignment_warning'):
+                conflicting_requests = self.search([
+                    ('id', '!=', rec.id),
+                    ('designer_id', '=', rec.designer_id.id),
+                    ('require_date', '=', rec.require_date),
+                    ('state', 'in', ('approved', 'assigned', 'in_progress')),
+                ]) if rec.require_date else self.browse()
+                if conflicting_requests:
+                    conflict_text = ', '.join(
+                        f"{request.ticket_ref} ({request.partner_id.name})"
+                        for request in conflicting_requests
+                    )
+                    wizard = self.env['client.ticket.assign.warning'].create({
+                        'ticket_id': rec.id,
+                        'message': (
+                            f"Designer {rec.designer_id.name} is already busy with "
+                            f"another client on {rec.require_date}.\n\n"
+                            f"Conflicting Design Request: {conflict_text}\n\n"
+                            "Please check with the designer first."
+                        ),
+                    })
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'name': 'Assignment Warning',
+                        'res_model': 'client.ticket.assign.warning',
+                        'view_mode': 'form',
+                        'res_id': wizard.id,
+                        'target': 'new',
+                    }
+            rec.write({'project_id': project.id})
+            rec._action_assign()
+
+    def _action_assign(self):
+        for rec in self:
+            design_area = dict(DESIGN_AREA_SELECTION).get(
+                rec.design_area, rec.design_area or 'Design Area'
+            )
             task = rec.project_task_id
             if not task:
                 task = self.env['project.task'].create({
@@ -354,4 +531,40 @@ class ClientTicket(models.Model):
                 'my_module.mail_template_ticket_overdue',
                 ticket.design_manager_id,
                 f"Overdue reminder emailed to {ticket.design_manager_id.name}.",
+            )
+
+    @api.model
+    def _cron_email_deadline_reminders(self):
+        reminder_date = fields.Date.context_today(self) + timedelta(days=1)
+        tickets = self.search([
+            ('require_date', '!=', False),
+            ('designer_id', '!=', False),
+            ('state', 'not in', ('completed', 'closed', 'cancel')),
+        ])
+        for ticket in tickets:
+            if fields.Datetime.to_datetime(ticket.require_date).date() != reminder_date:
+                continue
+
+            recipients = {
+                email for email in (
+                    ticket.design_manager_id.email,
+                    ticket.designer_id.email,
+                ) if email
+            }
+            if not recipients:
+                ticket.message_post(
+                    body='Deadline reminder was not emailed: no manager or designer email was found.'
+                )
+                continue
+
+            template = self.env.ref(
+                'my_module.mail_template_ticket_deadline_reminder'
+            ).sudo()
+            template.send_mail(
+                ticket.id,
+                force_send=True,
+                email_values={'email_to': ','.join(sorted(recipients))},
+            )
+            ticket.message_post(
+                body='Deadline reminder emailed to the Design Manager and Designer.'
             )

@@ -16,7 +16,11 @@ class ClientTicketApi(http.Controller):
             'partner_id': ticket.partner_id.id,
             'partner_name': ticket.partner_id.name,
             'request_type': ticket.request_type,
-            'product_type': ticket.product_type,
+            'design_area': dict(ticket._fields['design_area'].selection).get(
+                ticket.design_area, ticket.design_area
+            ),
+            # Compatibility response for existing API consumers.
+            'product_type': ticket.design_area,
             'requester_id': ticket.requester_id.id,
             'design_manager_id': ticket.design_manager_id.id,
             'designer_id': ticket.designer_id.id,
@@ -92,7 +96,7 @@ class ClientTicketApi(http.Controller):
 
         payload = request.httprequest.get_json(silent=True) or {}
         allowed_fields = {
-            'request_type', 'product_type', 'phone', 'email', 'project_id',
+            'request_type', 'design_area', 'product_type', 'phone', 'email', 'project_id',
             'design_manager_id', 'designer_id', 'require_date', 'description',
             'phis_ref', 'aihouse_ref', 'priority',
         }
@@ -100,6 +104,8 @@ class ClientTicketApi(http.Controller):
             key: value for key, value in payload.items()
             if key in allowed_fields
         }
+        if 'design_area' in payload:
+            values['design_area'] = payload['design_area']
 
         raw_partner_id = payload.get('partner_id')
         partner_name = payload.get('partner_name')
@@ -155,8 +161,9 @@ class ClientTicketApi(http.Controller):
     def create_ticket(self, **kwargs):
         payload = request.httprequest.get_json(silent=True) or {}
         allowed_fields = {
-            'request_type', 
-            'product_type', 
+            'request_type',
+            'design_area',
+            'product_type',
             'phone', 
             'email',
             'project_id', 
@@ -171,6 +178,8 @@ class ClientTicketApi(http.Controller):
             key: value for key, value in payload.items()
             if key in allowed_fields
         }
+        if 'design_area' in payload:
+            values['design_area'] = payload['design_area']
 
         # Accept either a partner ID or a customer name. If the name does
         # not exist, create a partner using the normal Odoo permissions.

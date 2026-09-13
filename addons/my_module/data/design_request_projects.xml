@@ -1,0 +1,14 @@
+<odoo noupdate="1">
+    <record id="project_interior_design" model="project.project">
+        <field name="name">Interior Design</field>
+        <field name="active">True</field>
+    </record>
+    <record id="project_exterior_design" model="project.project">
+        <field name="name">Exterior Design</field>
+        <field name="active">True</field>
+    </record>
+    <record id="project_outdoor_design" model="project.project">
+        <field name="name">Outdoor Design</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

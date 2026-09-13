@@ -16,7 +16,7 @@ class BillOfQuantity(models.Model):
     email = fields.Char(string='Email', related='request_id.email', readonly=True)
     require_date = fields.Datetime(string='Required Date', related='request_id.require_date', readonly=True)
     unit_code = fields.Char(string='Unit Code')
-    product_type = fields.Selection(related='request_id.product_type', string='Design Area', readonly=True)
+    design_area = fields.Selection(related='request_id.design_area', string='Design Area', readonly=True)
     priority = fields.Selection(related='request_id.priority', string='Priority', readonly=True)
     version = fields.Integer(string='Version', default=1, required=True)
     revision_date = fields.Date(string='Revision Date', default=fields.Date.context_today, required=True)
@@ -43,11 +43,11 @@ class BillOfQuantity(models.Model):
     total_materials_cost = fields.Monetary(string='Total Materials Cost', compute='_compute_totals', store=True)
     total_service_cost = fields.Monetary(string='Total Service / Overhead Cost', compute='_compute_totals', store=True)
     total_labor_cost = fields.Monetary(string='Total Labor Cost', compute='_compute_totals', store=True)
+    margin_cost = fields.Monetary(string='Margin Cost', compute='_compute_totals', store=True)
     margin = fields.Float(string='Margin (%)', default=0.0)
     history_ids = fields.One2many(
         'client.bill_of_quantity.history', 'boq_id', string='Audit History', readonly=True,
     )
-    quotation_template_id = fields.Many2one('sale.order.template', string='Quotation Template')
     sale_order_ids = fields.One2many('sale.order', 'boq_id', string='Sale Quotations', readonly=True)
     sale_order_count = fields.Integer(string='Sales', compute='_compute_sale_order_count')
 
@@ -65,7 +65,8 @@ class BillOfQuantity(models.Model):
             )
             # The percentage widget stores 10% as 0.10, so margin is applied
             # as a markup on the combined material, service, and labor costs.
-            boq.total_cost = base_total * (1 + boq.margin)
+            boq.margin_cost = base_total * boq.margin
+            boq.total_cost = base_total + boq.margin_cost
 
     def _compute_sale_order_count(self):
         for boq in self:
@@ -194,7 +195,6 @@ class BillOfQuantity(models.Model):
                 'origin': self.request_id.ticket_ref,
                 'client_order_ref': self.name,
                 'boq_id': self.id,
-                'sale_order_template_id': self.quotation_template_id.id or False,
                 'pricelist_id': self.partner_id.property_product_pricelist.id,
             })
             for line in self.line_ids:

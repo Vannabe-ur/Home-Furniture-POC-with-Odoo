@@ -62,7 +62,7 @@
                                 </tr>
                                 <tr>
                                     <td class="ticket-label">Design Area</td>
-                                    <td class="ticket-value" colspan="3"><span t-field="doc.product_type"/></td>
+                                    <td class="ticket-value" colspan="3"><span t-field="doc.design_area"/></td>
                                 </tr>
                                 <tr>
                                     <td class="ticket-label">Phone</td>
@@ -106,5 +106,12 @@
                 </t>
             </t>
         </t>
+    </template>
+
+    <!-- Keep PDF footers minimal: remove the default company contact line. -->
+    <template id="report_external_layout_minimal_footer" inherit_id="web.external_layout_standard">
+        <xpath expr="//div[contains(@t-attf-class, 'footer')]" position="replace">
+            <div class="footer"/>
+        </xpath>
     </template>
 </odoo>
