@@ -132,3 +132,89 @@ selected, it automatically uses the Project matching the Request Type:
 - Outdoor Design → Outdoor Design
 
 The selected Project is stored on the request when assignment is completed.
+
+---
+
+## Bill of Quantity (BoQ)
+
+The BoQ is the costing and approval document for a Design Request. It is
+linked to one Design Request and carries the customer, required date, Design
+Area, responsible designer, Design Manager, budget, attachments, item lines,
+version, and revision date.
+
+### BoQ items and costing
+
+Each BoQ item can contain:
+
+- Date
+- Job Type: Material, Service, or Labor
+- Product
+- Description
+- Quantity and Unit of Measure
+- Sale Price
+- Subtotal
+
+The BoQ separates costs into Materials, Service / Overhead, and Labor. The
+calculation is:
+
+```text
+Base Cost = Materials Cost + Service / Overhead Cost + Labor Cost
+Margin Cost = Base Cost × Margin Percentage
+Total Estimate Cost = Base Cost + Margin Cost
+```
+
+The Billing Summary displays the three cost categories, Margin Cost, and Total
+Cost on the right side of the BoQ form and report.
+
+### BoQ workflow
+
+```text
+Draft → Submitted → Approved → Done
+                 ↘ Rejected → Draft (new version)
+```
+
+- **Draft**: the designer prepares or revises the BoQ.
+- **Submitted**: the BoQ is sent to the assigned Design Manager.
+- **Approved**: the manager approves the submitted version.
+- **Done**: the approved BoQ is finalized and can create a Sale Quotation.
+- **Rejected**: the manager must provide feedback. The BoQ returns to Draft,
+  increments its Version, updates Revision Date, and notifies the designer.
+- **Cancelled**: the BoQ is stopped and cannot continue through the normal
+  workflow.
+
+The Submit button becomes **Resubmit** when the Version is greater than 1.
+Reset to Draft is not available from the BoQ form.
+
+### Audit History
+
+The Audit History tab records workflow and revision events, including creation,
+submission, approval, rejection, completion, cancellation, and version
+changes. Each entry records the event time, user, state, version, and any
+feedback or note.
+
+### Access control
+
+- Administrators can access all BoQs.
+- Design Managers can access BoQs linked to Design Requests assigned to them.
+- Designers can access BoQs linked to Design Requests assigned to them.
+- BoQ lines and Audit History follow the same assignment-based access rules.
+
+### Views and reporting
+
+BoQ provides List, Kanban, Calendar, Pivot, and Form views. The BoQ Summary
+report is available from the Print menu and uses a clean, borderless Billing
+Summary layout.
+
+### Sale Quotation integration
+
+A Sale Quotation can be created only after the BoQ reaches **Done**. The action:
+
+- Uses the BoQ customer.
+- Sets Source Document to the Design Request sequence.
+- Links the quotation to the BoQ and Design Request.
+- Copies BoQ item lines into Order Lines without Date and Job Type.
+- Brings the BoQ base amount, margin percentage, and Total Estimate Cost into
+  the quotation summary.
+
+The quotation provides smart buttons back to the related BoQ and Design
+Request. The BoQ provides a smart button to its related quotations.
