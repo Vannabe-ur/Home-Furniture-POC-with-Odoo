@@ -211,7 +211,7 @@ class ClientTicket(models.Model):
     design_manager_id = fields.Many2one('res.users', string="Design Manager")
     designer_id = fields.Many2one('res.users', string="Designer")
     require_date = fields.Datetime(string="Require Date")
-    is_overdue = fields.Boolean(string="Overdue", compute='_compute_is_overdue', store=True)
+    is_overdue = fields.Boolean(string="Overdue", compute='_compute_is_overdue')
     boq_id = fields.Many2one(
         'client.bill_of_quantity', string="Related BoQ", ondelete='restrict',
         domain="[('request_id', '=', id)]",
@@ -270,28 +270,29 @@ class ClientTicket(models.Model):
         }
 
     def write(self, vals):
-        if any(ticket.state == 'closed' for ticket in self):
-            raise UserError("Closed design requests are locked and cannot be edited.")
+        if any(ticket.state in ('closed', 'cancel') for ticket in self):
+            raise UserError(
+                "Closed or cancelled design requests are locked and cannot be edited."
+            )
         if vals.get('design_area'):
             vals = dict(vals, product_type=vals['design_area'])
         return super().write(vals)
 
     @api.depends('require_date', 'state')
     def _compute_is_overdue(self):
-        today = fields.Date.today()
-
         for rec in self:
-            if rec.require_date:
-                due_date = fields.Datetime.to_datetime(
-                    rec.require_date
-                ).date()
+            rec.is_overdue = rec._is_overdue_today()
 
-                rec.is_overdue = (
-                    due_date < today
-                    and rec.state not in ('completed', 'closed', 'cancel')
-                )
-            else:
-                rec.is_overdue = False
+    def _is_overdue_today(self):
+        self.ensure_one()
+        if not self.require_date or self.state in ('completed', 'closed', 'cancel'):
+            return False
+
+        require_datetime = fields.Datetime.to_datetime(self.require_date)
+        require_date_local = fields.Datetime.context_timestamp(
+            self, require_datetime
+        ).date()
+        return require_date_local < fields.Date.context_today(self)
 
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
@@ -309,6 +310,10 @@ class ClientTicket(models.Model):
 
     def action_reset_draft(self):
         for rec in self:
+            if rec.state in ('closed', 'cancel'):
+                raise UserError(
+                    "Closed or cancelled design requests cannot be reset to draft."
+                )
             rec.state = 'draft'
 
     def action_submitted(self):
@@ -325,13 +330,8 @@ class ClientTicket(models.Model):
                 'submitted_at': fields.Datetime.now(),
                 'submitted_by': self.env.user.id,
             })
-            rec.message_post(
-                body=f"Design Request submitted to Design Manager {rec.design_manager_id.name}."
-            )
-            rec._send_template_email(
-                'my_module.mail_template_ticket_submitted',
-                rec.design_manager_id,
-                f"Notification email sent to Design Manager {rec.design_manager_id.name}.",
+            rec._post_template_to_chatter(
+                'my_module.mail_template_ticket_submitted'
             )
 
     def action_approved(self):
@@ -499,22 +499,49 @@ class ClientTicket(models.Model):
         template.send_mail(
             self.id,
             force_send=True,
-            email_values={'email_to': recipient.email},
+            raise_exception=True,
+            email_values={
+                'email_to': recipient.email,
+                'email_from': (
+                    self.env.company.email_formatted
+                    or self.env.user.email_formatted
+                    or ''
+                ),
+            },
         )
-        if log_note:
-            self.message_post(body=log_note)
 
     def _send_assignment_email(self):
         self.ensure_one()
-        self._send_template_email(
-            'my_module.mail_template_ticket_assigned',
-            self.designer_id,
-            f"Assignment email sent to Designer {self.designer_id.name}.",
+        self._post_template_to_chatter(
+            'my_module.mail_template_ticket_assigned'
+        )
+
+    def _post_template_to_chatter(self, template_xmlid):
+        self.ensure_one()
+        template = self.env.ref(
+            template_xmlid
+        ).sudo()
+        rendered_body = template._render_field(
+            'body_html', self.ids, options={'post_process': True}
+        ).get(self.id, '')
+        rendered_subject = template._render_field(
+            'subject', self.ids
+        ).get(self.id, '')
+        self.message_post(
+            body=rendered_body,
+            subject=rendered_subject or False,
+            message_type='email',
+            subtype_xmlid='mail.mt_comment',
+            body_is_html=True,
         )
 
     @api.model
     def _cron_notify_overdue(self):
-        overdue = self.search([('is_overdue', '=', True)])
+        candidates = self.search([
+            ('require_date', '!=', False),
+            ('state', 'not in', ('completed', 'closed', 'cancel')),
+        ])
+        overdue = candidates.filtered(lambda ticket: ticket._is_overdue_today())
         for ticket in overdue:
             ticket.message_post(
                 body=f"This design request is overdue (due {ticket.require_date})."
@@ -522,10 +549,12 @@ class ClientTicket(models.Model):
 
     @api.model
     def _cron_email_assigned_overdue(self):
-        overdue = self.search([
-            ('is_overdue', '=', True),
+        candidates = self.search([
+            ('require_date', '!=', False),
             ('design_manager_id', '!=', False),
+            ('state', 'not in', ('completed', 'closed', 'cancel')),
         ])
+        overdue = candidates.filtered(lambda ticket: ticket._is_overdue_today())
         for ticket in overdue:
             ticket._send_template_email(
                 'my_module.mail_template_ticket_overdue',
@@ -538,11 +567,14 @@ class ClientTicket(models.Model):
         reminder_date = fields.Date.context_today(self) + timedelta(days=1)
         tickets = self.search([
             ('require_date', '!=', False),
-            ('designer_id', '!=', False),
             ('state', 'not in', ('completed', 'closed', 'cancel')),
         ])
         for ticket in tickets:
-            if fields.Datetime.to_datetime(ticket.require_date).date() != reminder_date:
+            require_datetime = fields.Datetime.to_datetime(ticket.require_date)
+            require_date_local = fields.Datetime.context_timestamp(
+                ticket, require_datetime
+            ).date()
+            if require_date_local != reminder_date:
                 continue
 
             recipients = {
@@ -563,8 +595,13 @@ class ClientTicket(models.Model):
             template.send_mail(
                 ticket.id,
                 force_send=True,
-                email_values={'email_to': ','.join(sorted(recipients))},
-            )
-            ticket.message_post(
-                body='Deadline reminder emailed to the Design Manager and Designer.'
+                raise_exception=True,
+                email_values={
+                    'email_to': ','.join(sorted(recipients)),
+                    'email_from': (
+                        ticket.env.company.email_formatted
+                        or ticket.env.user.email_formatted
+                        or ''
+                    ),
+                },
             )

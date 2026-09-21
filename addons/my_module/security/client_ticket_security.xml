@@ -159,4 +159,38 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
+    <!-- Administrators can access every BoQ and its related records. -->
+    <record id="rule_bill_of_quantity_admin_all" model="ir.rule">
+        <field name="name">Administrators: All BoQs</field>
+        <field name="model_id" ref="model_client_bill_of_quantity"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_bill_of_quantity_line_admin_all" model="ir.rule">
+        <field name="name">Administrators: All BoQ Lines</field>
+        <field name="model_id" ref="model_client_bill_of_quantity_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_bill_of_quantity_history_admin_all" model="ir.rule">
+        <field name="name">Administrators: All BoQ History</field>
+        <field name="model_id" ref="model_client_bill_of_quantity_history"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
 </odoo>

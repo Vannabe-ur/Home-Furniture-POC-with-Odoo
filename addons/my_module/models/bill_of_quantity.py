@@ -82,6 +82,14 @@ class BillOfQuantity(models.Model):
             boq._record_history('created')
         return records
 
+    def write(self, vals):
+        locked_boqs = self.filtered(lambda boq: boq.state in ('done', 'cancel'))
+        if locked_boqs:
+            raise UserError(
+                'A BoQ is locked after it is marked Done or Cancelled and cannot be modified.'
+            )
+        return super().write(vals)
+
     @api.onchange('request_id')
     def _onchange_request_id(self):
         if self.request_id:
@@ -97,7 +105,7 @@ class BillOfQuantity(models.Model):
                 raise UserError('Please select a Design Manager before submitting the BoQ.')
             boq.write({'state': 'submitted'})
             boq._record_history('submitted')
-            boq._send_template_email('my_module.mail_template_boq_submitted', boq.design_manager_id)
+            boq._post_template_to_chatter('my_module.mail_template_boq_submitted')
 
     def action_approve(self):
         for boq in self:
@@ -112,7 +120,7 @@ class BillOfQuantity(models.Model):
                 'approved_by': self.env.user.id,
             })
             boq._record_history('approved')
-            boq._send_template_email('my_module.mail_template_boq_approved', boq.responsible_id)
+            boq._post_template_to_chatter('my_module.mail_template_boq_approved')
 
     def action_reject(self):
         for boq in self:
@@ -132,7 +140,7 @@ class BillOfQuantity(models.Model):
                 'rejected_by': self.env.user.id,
             })
             boq._record_history('rejected', boq.rejection_feedback)
-            boq._send_template_email('my_module.mail_template_boq_rejected', boq.responsible_id)
+            boq._post_template_to_chatter('my_module.mail_template_boq_rejected')
 
     def action_done(self):
         for boq in self:
@@ -150,6 +158,8 @@ class BillOfQuantity(models.Model):
 
     def action_reset_draft(self):
         for boq in self:
+            if boq.state in ('done', 'cancel'):
+                raise UserError('A Done or Cancelled BoQ cannot be reopened.')
             boq.write({'state': 'draft'})
             boq._record_history('reset')
 
@@ -184,6 +194,12 @@ class BillOfQuantity(models.Model):
         if not self.partner_id:
             raise UserError('Please select a customer before creating a sale quotation.')
 
+        missing_product_lines = self.line_ids.filtered(lambda line: not line.product_id)
+        if missing_product_lines:
+            raise UserError(
+                'Every BoQ item must have a product before creating a sale quotation.'
+            )
+
         existing_order = self.sale_order_ids.filtered(
             lambda order: order.state in ('draft', 'sent')
         )[:1]
@@ -212,6 +228,46 @@ class BillOfQuantity(models.Model):
                     'price_unit': line.sale_price,
                     'name': line.description or (product.display_name if product else '/'),
                 })
+
+
+        margin_product = self.env['product.product'].sudo().search(
+            [('default_code', '=', 'BOQ-MARGIN')], limit=1
+        )
+        if self.margin_cost and not margin_product:
+            margin_template = self.env['product.template'].sudo().create({
+                'name': 'BoQ Margin',
+                'default_code': 'BOQ-MARGIN',
+                'detailed_type': 'service',
+                'sale_ok': True,
+                'purchase_ok': False,
+            })
+            margin_product = margin_template.product_variant_id
+
+        margin_lines = order.order_line.filtered(
+            lambda line: line.product_id == margin_product
+            and (line.name or '').startswith('BoQ Margin (')
+        ) if margin_product else self.env['sale.order.line']
+        if self.margin_cost:
+            unit_uom = self.env.ref(
+                'uom.product_uom_unit', raise_if_not_found=False
+            )
+            margin_values = {
+                'product_id': margin_product.id,
+                'product_uom_id': unit_uom.id if unit_uom else False,
+                'product_uom_qty': 1.0,
+                'price_unit': self.margin_cost,
+                'name': f'BoQ Margin ({self.margin:.2%})',
+            }
+            if margin_lines:
+                margin_lines[:1].write(margin_values)
+                margin_lines[1:].unlink()
+            else:
+                self.env['sale.order.line'].create({
+                    'order_id': order.id,
+                    **margin_values,
+                })
+        elif margin_lines:
+            margin_lines.unlink()
 
         return {
             'name': 'Sale Quotation',
@@ -245,6 +301,29 @@ class BillOfQuantity(models.Model):
             email_values={'email_to': recipient.email},
         )
 
+    def _post_template_to_chatter(self, template_xmlid):
+        """Render a mail template as an email-style chatter message.
+
+        This deliberately does not send through SMTP. It keeps the workflow
+        visible in the BoQ chatter even when the academic/demo environment
+        has no outgoing mail server configured.
+        """
+        self.ensure_one()
+        template = self.env.ref(template_xmlid).sudo()
+        rendered_body = template._render_field(
+            'body_html', self.ids, options={'post_process': True}
+        ).get(self.id, '')
+        rendered_subject = template._render_field(
+            'subject', self.ids
+        ).get(self.id, '')
+        self.message_post(
+            body=rendered_body,
+            subject=rendered_subject or False,
+            message_type='email',
+            subtype_xmlid='mail.mt_comment',
+            body_is_html=True,
+        )
+
 
 class BillOfQuantityLine(models.Model):
     _name = 'client.bill_of_quantity.line'
@@ -262,6 +341,26 @@ class BillOfQuantityLine(models.Model):
     sale_price = fields.Monetary(string='Sale Price')
     subtotal = fields.Monetary(string='Subtotal', compute='_compute_subtotal', store=True)
     currency_id = fields.Many2one(related='boq_id.currency_id', string='Currency', store=True, readonly=True)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        boq_ids = [vals.get('boq_id') for vals in vals_list if vals.get('boq_id')]
+        locked_boqs = self.env['client.bill_of_quantity'].browse(boq_ids).filtered(
+            lambda boq: boq.state in ('done', 'cancel')
+        )
+        if locked_boqs:
+            raise UserError('Items cannot be added to a Done or Cancelled BoQ.')
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if self.filtered(lambda line: line.boq_id.state in ('done', 'cancel')):
+            raise UserError('Items in a Done or Cancelled BoQ cannot be modified.')
+        return super().write(vals)
+
+    def unlink(self):
+        if self.filtered(lambda line: line.boq_id.state in ('done', 'cancel')):
+            raise UserError('Items in a Done or Cancelled BoQ cannot be deleted.')
+        return super().unlink()
 
     @api.depends('quantity', 'sale_price')
     def _compute_subtotal(self):
