@@ -29,6 +29,8 @@ class BillOfQuantity(models.Model):
     state = fields.Selection([('draft', 'Draft'), 
                               ('submitted', 'Submitted'), 
                               ('approved', 'Approved'),
+                              ('customer_review', 'Customer Review'),
+                              ('customer_approved', 'Customer Approved'),
                               ('done', 'Done'),
                               ('cancel', 'Cancelled')], 
                               string='Status', default='draft', required=True, tracking=True, group_expand=True)
@@ -122,6 +124,53 @@ class BillOfQuantity(models.Model):
             boq._record_history('approved')
             boq._post_template_to_chatter('my_module.mail_template_boq_approved')
 
+    def action_send_customer_review(self):
+        self.ensure_one()
+        if self.state != 'approved':
+            raise UserError('Only an approved BoQ can be sent for customer review.')
+        if not self.attachment:
+            raise UserError('Attach the design file before sending the BoQ to the customer.')
+        customer_email = self.partner_id.email or self.email
+        if not customer_email:
+            raise UserError('The customer must have an email address before sending the BoQ.')
+
+        attachment = self.env['ir.attachment'].create({
+            'name': self.attachment_filename or f'{self.name} - design file',
+            'type': 'binary',
+            'datas': self.attachment,
+            'res_model': self._name,
+            'res_id': self.id,
+            'mimetype': 'application/octet-stream',
+        })
+        self.write({'state': 'customer_review'})
+        self._record_history('customer_review')
+        return {
+            'name': 'Send BoQ for Customer Review',
+            'type': 'ir.actions.act_window',
+            'res_model': 'mail.compose.message',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_model': self._name,
+                'default_res_ids': [self.id],
+                'default_use_template': True,
+                'default_template_id': self.env.ref(
+                    'my_module.mail_template_boq_customer_review'
+                ).id,
+                'default_composition_mode': 'comment',
+                'force_email': True,
+                'default_partner_ids': [(4, self.partner_id.id)],
+                'default_attachment_ids': [(4, attachment.id)],
+            },
+        }
+
+    def action_customer_approve(self):
+        for boq in self:
+            if boq.state != 'customer_review':
+                raise UserError('Only a BoQ in Customer Review can be approved by the customer.')
+            boq.write({'state': 'customer_approved'})
+            boq._record_history('customer_approved')
+
     def action_reject(self):
         for boq in self:
             if boq.state != 'submitted':
@@ -144,8 +193,8 @@ class BillOfQuantity(models.Model):
 
     def action_done(self):
         for boq in self:
-            if boq.state != 'approved':
-                raise UserError('Only approved BoQs can be marked done.')
+            if boq.state != 'customer_approved':
+                raise UserError('Only customer-approved BoQs can be marked done.')
             boq.write({'state': 'done'})
             boq._record_history('done')
 
@@ -237,11 +286,18 @@ class BillOfQuantity(models.Model):
             margin_template = self.env['product.template'].sudo().create({
                 'name': 'BoQ Margin',
                 'default_code': 'BOQ-MARGIN',
-                'detailed_type': 'service',
+                'type': 'service',
                 'sale_ok': True,
                 'purchase_ok': False,
+                'invoice_policy': 'order',
             })
             margin_product = margin_template.product_variant_id
+        if margin_product:
+            margin_product.product_tmpl_id.sudo().write({
+                'type': 'service',
+                'sale_ok': True,
+                'invoice_policy': 'order',
+            })
 
         margin_lines = order.order_line.filtered(
             lambda line: line.product_id == margin_product
@@ -385,6 +441,8 @@ class BillOfQuantityHistory(models.Model):
         ('created', 'Created'),
         ('submitted', 'Submitted for Approval'),
         ('approved', 'Approved'),
+        ('customer_review', 'Customer Review'),
+        ('customer_approved', 'Customer Approved'),
         ('rejected', 'Rejected'),
         ('done', 'Done'),
         ('cancelled', 'Cancelled'),
@@ -394,6 +452,8 @@ class BillOfQuantityHistory(models.Model):
         ('draft', 'Draft'),
         ('submitted', 'Submitted'),
         ('approved', 'Approved'),
+        ('customer_review', 'Customer Review'),
+        ('customer_approved', 'Customer Approved'),
         ('done', 'Done'),
         ('cancel', 'Cancelled'),
     ], string='State', readonly=True)
@@ -455,3 +515,39 @@ class SaleOrder(models.Model):
             'view_mode': 'form',
             'res_id': self.client_ticket_id.id,
         }
+
+
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+
+    boq_id = fields.Many2one(
+        'client.bill_of_quantity', string='BoQ', compute='_compute_boq_details',
+        store=True, readonly=True,
+    )
+    boq_margin = fields.Float(
+        string='BoQ Margin (%)', compute='_compute_boq_details', store=True,
+        readonly=True,
+    )
+    boq_margin_cost = fields.Monetary(
+        string='BoQ Margin', compute='_compute_boq_details', store=True,
+        readonly=True,
+    )
+    boq_total_cost = fields.Monetary(
+        string='BoQ Total Cost', compute='_compute_boq_details', store=True,
+        readonly=True,
+    )
+
+    @api.depends(
+        'invoice_line_ids.sale_line_ids.order_id.boq_id',
+        'invoice_line_ids.sale_line_ids.order_id.boq_id.margin',
+        'invoice_line_ids.sale_line_ids.order_id.boq_id.margin_cost',
+        'invoice_line_ids.sale_line_ids.order_id.boq_id.total_cost',
+    )
+    def _compute_boq_details(self):
+        for move in self:
+            sale_orders = move.invoice_line_ids.mapped('sale_line_ids.order_id')
+            boq = sale_orders.mapped('boq_id')[:1]
+            move.boq_id = boq
+            move.boq_margin = boq.margin if boq else 0.0
+            move.boq_margin_cost = boq.margin_cost if boq else 0.0
+            move.boq_total_cost = boq.total_cost if boq else 0.0

@@ -11,4 +11,55 @@
         <field name="name">Outdoor Design</field>
         <field name="active">True</field>
     </record>
+
+    <record id="stage_interior_new" model="project.task.type">
+        <field name="name">New</field>
+        <field name="sequence">1</field>
+        <field name="project_ids" eval="[(6, 0, [ref('my_module.project_interior_design')])]"/>
+    </record>
+    <record id="stage_interior_in_progress" model="project.task.type">
+        <field name="name">In Progress</field>
+        <field name="sequence">2</field>
+        <field name="project_ids" eval="[(6, 0, [ref('my_module.project_interior_design')])]"/>
+    </record>
+    <record id="stage_interior_done" model="project.task.type">
+        <field name="name">Done</field>
+        <field name="sequence">3</field>
+        <field name="fold">True</field>
+        <field name="project_ids" eval="[(6, 0, [ref('my_module.project_interior_design')])]"/>
+    </record>
+
+    <record id="stage_exterior_new" model="project.task.type">
+        <field name="name">New</field>
+        <field name="sequence">1</field>
+        <field name="project_ids" eval="[(6, 0, [ref('my_module.project_exterior_design')])]"/>
+    </record>
+    <record id="stage_exterior_in_progress" model="project.task.type">
+        <field name="name">In Progress</field>
+        <field name="sequence">2</field>
+        <field name="project_ids" eval="[(6, 0, [ref('my_module.project_exterior_design')])]"/>
+    </record>
+    <record id="stage_exterior_done" model="project.task.type">
+        <field name="name">Done</field>
+        <field name="sequence">3</field>
+        <field name="fold">True</field>
+        <field name="project_ids" eval="[(6, 0, [ref('my_module.project_exterior_design')])]"/>
+    </record>
+
+    <record id="stage_outdoor_new" model="project.task.type">
+        <field name="name">New</field>
+        <field name="sequence">1</field>
+        <field name="project_ids" eval="[(6, 0, [ref('my_module.project_outdoor_design')])]"/>
+    </record>
+    <record id="stage_outdoor_in_progress" model="project.task.type">
+        <field name="name">In Progress</field>
+        <field name="sequence">2</field>
+        <field name="project_ids" eval="[(6, 0, [ref('my_module.project_outdoor_design')])]"/>
+    </record>
+    <record id="stage_outdoor_done" model="project.task.type">
+        <field name="name">Done</field>
+        <field name="sequence">3</field>
+        <field name="fold">True</field>
+        <field name="project_ids" eval="[(6, 0, [ref('my_module.project_outdoor_design')])]"/>
+    </record>
 </odoo>

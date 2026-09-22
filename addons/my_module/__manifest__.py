@@ -4,7 +4,7 @@
     'summary': 'Manage house project decoration requests from clients',
     'category': 'Services',
     'author': 'Vanna',
-    'depends': ['base', 'mail', 'project', 'mrp', 'sale', 'sale_management', 'website'],
+    'depends': ['base', 'mail', 'project', 'mrp', 'account', 'sale', 'sale_management', 'website'],
     'data' : [
         'security/client_ticket_security.xml',
         'security/ir.model.access.csv',
@@ -16,6 +16,7 @@
         'views/client_ticket_views_ver2.xml',
         'views/client_ticket_assign_warning_views.xml',
         'views/bill_of_quantity_views.xml',
+        'views/account_move_views.xml',
         'views/res_partner_views.xml',
         'data/client_ticket_cron.xml',
         'data/client_ticket_mail_templates.xml',

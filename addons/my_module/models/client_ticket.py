@@ -417,14 +417,21 @@ class ClientTicket(models.Model):
                 rec.design_area, rec.design_area or 'Design Area'
             )
             task = rec.project_task_id
+            new_stage = self.env['project.task.type'].search([
+                ('project_ids', 'in', rec.project_id.id),
+                ('name', '=', 'New'),
+            ], limit=1)
             if not task:
-                task = self.env['project.task'].create({
+                task_values = {
                     'name': f"{rec.ticket_ref} - {design_area}",
                     'project_id': rec.project_id.id,
                     'user_ids': [(6, 0, [rec.designer_id.id])],
                     'partner_id': rec.partner_id.id,
                     'description': rec.description or False,
-                })
+                }
+                if new_stage:
+                    task_values['stage_id'] = new_stage.id
+                task = self.env['project.task'].create(task_values)
             rec.write({
                 'state': 'assigned',
                 'assigned_at': fields.Datetime.now(),
@@ -442,6 +449,12 @@ class ClientTicket(models.Model):
                 'started_at': fields.Datetime.now(),
                 'started_by': self.env.user.id,
             })
+            in_progress_stage = self.env['project.task.type'].search([
+                ('project_ids', 'in', rec.project_id.id),
+                ('name', '=', 'In Progress'),
+            ], limit=1)
+            if rec.project_task_id and in_progress_stage:
+                rec.project_task_id.write({'stage_id': in_progress_stage.id})
 
     def action_complete(self):
         for rec in self:
@@ -461,6 +474,12 @@ class ClientTicket(models.Model):
                 'completed_at': fields.Datetime.now(),
                 'completed_by': self.env.user.id,
             })
+            done_stage = self.env['project.task.type'].search([
+                ('project_ids', 'in', rec.project_id.id),
+                ('name', '=', 'Done'),
+            ], limit=1)
+            if rec.project_task_id and done_stage:
+                rec.project_task_id.write({'stage_id': done_stage.id})
             rec._send_template_email(
                 'my_module.mail_template_ticket_completed',
                 rec.design_manager_id,
