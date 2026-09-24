@@ -114,7 +114,7 @@ Where Business Logic lives in Odoo code:
 **RESTART:**
 
 ```
-docker compose exec odoo odoo -d odoo-dev -u my_module --stop-after-init && docker compose restart odoo
+docker compose exec odoo odoo -d luma -u my_module --stop-after-init && docker compose restart odoo
 ```
 
 ---

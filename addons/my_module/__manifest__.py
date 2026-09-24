@@ -1,5 +1,5 @@
 {
-    'name': 'Home Furniture Business',
+    'name': 'Design Request',
     'version': '2.0',
     'summary': 'Manage house project decoration requests from clients',
     'category': 'Services',
