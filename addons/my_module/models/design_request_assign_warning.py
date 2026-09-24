@@ -2,10 +2,10 @@ from odoo import fields, models
 
 
 class ClientTicketAssignWarning(models.TransientModel):
-    _name = 'client.ticket.assign.warning'
+    _name = 'design.request.assign.warning'
     _description = 'Design Request Assignment Warning'
 
-    ticket_id = fields.Many2one('client.ticket', required=True, readonly=True)
+    ticket_id = fields.Many2one('design.request', required=True, readonly=True)
     message = fields.Text(readonly=True)
 
     def action_assign_anyway(self):

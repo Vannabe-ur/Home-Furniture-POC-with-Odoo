@@ -69,7 +69,10 @@ LEGACY_DESIGN_AREA_MAP = {
 }
 
 class ClientTicket(models.Model):
-    _name = 'client.ticket'
+    _name = 'design.request'
+    # Keep the existing PostgreSQL table so a module upgrade can retain
+    # existing Design Request records while the Odoo technical model name changes.
+    _table = 'client_ticket'
     _rec_name = 'ticket_ref'
     _description = 'Design Request'
     _inherit = ['mail.thread']
@@ -231,7 +234,7 @@ class ClientTicket(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('ticket_ref', 'New') == 'New':
-                vals['ticket_ref'] = self.env['ir.sequence'].next_by_code('client.ticket') or 'New'
+                vals['ticket_ref'] = self.env['ir.sequence'].next_by_code('design.request') or 'New'
             if vals.get('design_area'):
                 vals['product_type'] = vals['design_area']
         return super().create(vals_list)
@@ -391,7 +394,7 @@ class ClientTicket(models.Model):
                         f"{request.ticket_ref} ({request.partner_id.name})"
                         for request in conflicting_requests
                     )
-                    wizard = self.env['client.ticket.assign.warning'].create({
+                    wizard = self.env['design.request.assign.warning'].create({
                         'ticket_id': rec.id,
                         'message': (
                             f"Designer {rec.designer_id.name} is already busy with "
@@ -403,7 +406,7 @@ class ClientTicket(models.Model):
                     return {
                         'type': 'ir.actions.act_window',
                         'name': 'Assignment Warning',
-                        'res_model': 'client.ticket.assign.warning',
+                        'res_model': 'design.request.assign.warning',
                         'view_mode': 'form',
                         'res_id': wizard.id,
                         'target': 'new',

@@ -40,14 +40,14 @@
     <!-- Disable the old rule from earlier module versions. -->
     <record id="rule_client_ticket_user_own_tasks" model="ir.rule">
         <field name="name">Users: Legacy Design Request Rule</field>
-        <field name="model_id" ref="model_client_ticket"/>
+        <field name="model_id" ref="model_design_request"/>
         <field name="active" eval="False"/>
     </record>
 
     <!-- Administrators can access every design request -->
     <record id="rule_client_ticket_admin_all" model="ir.rule">
         <field name="name">Administrators: All Design Requests</field>
-        <field name="model_id" ref="model_client_ticket"/>
+        <field name="model_id" ref="model_design_request"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="groups"
                eval="[(4, ref('base.group_system'))]"/>
@@ -60,7 +60,7 @@
     <!-- Design Managers see submitted design requests assigned to them -->
     <record id="rule_client_ticket_manager_all_tasks" model="ir.rule">
         <field name="name">Design Managers: Assigned Design Requests</field>
-        <field name="model_id" ref="model_client_ticket"/>
+        <field name="model_id" ref="model_design_request"/>
         <field name="domain_force">
             ['|',
              ('state', '=', 'draft'),
@@ -79,7 +79,7 @@
     <!-- Designers see approved and later design requests assigned to them -->
     <record id="rule_client_ticket_designer_assigned" model="ir.rule">
         <field name="name">Designers: Assigned Design Requests</field>
-        <field name="model_id" ref="model_client_ticket"/>
+        <field name="model_id" ref="model_design_request"/>
         <field name="domain_force">
             [('designer_id', '=', user.id),
              ('state', 'in', ('approved', 'assigned', 'in_progress', 'completed', 'closed'))]

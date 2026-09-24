@@ -1,7 +1,7 @@
 <odoo>
     <record id="view_client_ticket_assign_warning_form" model="ir.ui.view">
-        <field name="name">client.ticket.assign.warning.form</field>
-        <field name="model">client.ticket.assign.warning</field>
+        <field name="name">design.request.assign.warning.form</field>
+        <field name="model">design.request.assign.warning</field>
         <field name="arch" type="xml">
             <form string="Assignment Warning">
                 <sheet>

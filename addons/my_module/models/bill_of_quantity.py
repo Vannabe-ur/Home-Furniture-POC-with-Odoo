@@ -10,7 +10,7 @@ class BillOfQuantity(models.Model):
     _order = 'create_date desc, id desc'
 
     name = fields.Char(string='BoQ ID', readonly=True, copy=False, default='New', tracking=True)
-    request_id = fields.Many2one('client.ticket', string='Request ID', required=True, ondelete='restrict', tracking=True)
+    request_id = fields.Many2one('design.request', string='Request ID', required=True, ondelete='restrict', tracking=True)
     partner_id = fields.Many2one('res.partner', string='Customer', related='request_id.partner_id', store=True, readonly=True)
     phone = fields.Char(string='Phone', related='request_id.phone', readonly=True)
     email = fields.Char(string='Email', related='request_id.email', readonly=True)
@@ -217,7 +217,7 @@ class BillOfQuantity(models.Model):
         return {
             'name': 'Design Request',
             'type': 'ir.actions.act_window',
-            'res_model': 'client.ticket',
+            'res_model': 'design.request',
             'view_mode': 'form',
             'res_id': self.request_id.id,
         }
@@ -471,7 +471,7 @@ class SaleOrder(models.Model):
         'client.bill_of_quantity', string='BoQ', ondelete='restrict', copy=False,
     )
     client_ticket_id = fields.Many2one(
-        'client.ticket', string='Design Request', related='boq_id.request_id',
+        'design.request', string='Design Request', related='boq_id.request_id',
         store=True, readonly=True,
     )
     boq_margin = fields.Float(
@@ -511,7 +511,7 @@ class SaleOrder(models.Model):
         return {
             'name': 'Design Request',
             'type': 'ir.actions.act_window',
-            'res_model': 'client.ticket',
+            'res_model': 'design.request',
             'view_mode': 'form',
             'res_id': self.client_ticket_id.id,
         }

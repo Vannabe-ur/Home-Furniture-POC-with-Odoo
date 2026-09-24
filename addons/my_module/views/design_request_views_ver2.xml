@@ -1,8 +1,8 @@
 <odoo>
     <!-- Kanban View-->
     <record id="view_client_ticket_kanban" model="ir.ui.view">
-        <field name="name">client.ticket.kanban</field>
-        <field name="model">client.ticket</field>
+        <field name="name">design.request.kanban</field>
+        <field name="model">design.request</field>
         <field name="arch" type="xml">
             <kanban default_group_by="state">
                 <field name="ticket_ref"/>
@@ -39,8 +39,8 @@
 
     <!-- List (Tree) View -->
     <record id="view_client_ticket_list" model="ir.ui.view">
-        <field name="name">client.ticket.list</field>
-        <field name="model">client.ticket</field>
+        <field name="name">design.request.list</field>
+        <field name="model">design.request</field>
         <field name="arch" type="xml">
             <list>
                 <field name="ticket_ref"/>                
@@ -60,8 +60,8 @@
 
     <!-- Form View -->
     <record id="view_client_ticket_form" model="ir.ui.view">
-        <field name="name">client.ticket.form</field>
-        <field name="model">client.ticket</field>
+        <field name="name">design.request.form</field>
+        <field name="model">design.request</field>
         <field name="arch" type="xml">
             <form>
                 <header>
@@ -170,8 +170,8 @@
 
     <!-- Calenda View -->
     <record id="view_client_ticket_calendar" model="ir.ui.view">
-        <field name="name">client.ticket.calendar</field>
-        <field name="model">client.ticket</field>
+        <field name="name">design.request.calendar</field>
+        <field name="model">design.request</field>
         <field name="arch" type="xml">
             <calendar string="Design Requests" date_start="require_date" color="priority">
                 <field name="priority"/>
@@ -185,8 +185,8 @@
 
     <!-- Pivot table / Analytic View -->
     <record id="view_client_ticket_pivot" model="ir.ui.view">
-        <field name="name">client.ticket.pivot</field>
-        <field name="model">client.ticket</field>
+        <field name="name">design.request.pivot</field>
+        <field name="model">design.request</field>
         <field name="arch" type="xml">
             <pivot string="Design Requests Analysis" sample="1">
                 <field name="state" type="row"/>
@@ -197,8 +197,8 @@
 
     <!-- Graph / Analytic View -->
     <record id="view_client_ticket_graph" model="ir.ui.view">
-        <field name="name">client.ticket.graph</field>
-        <field name="model">client.ticket</field>
+        <field name="name">design.request.graph</field>
+        <field name="model">design.request</field>
         <field name="arch" type="xml">
             <graph string="Design Requests" type="pie" disable_linking="True">
                 <field name="state"/>
@@ -209,7 +209,7 @@
     <!-- Window Action -->
     <record id="action_client_ticket" model="ir.actions.act_window">
         <field name="name">Design Requests</field>
-        <field name="res_model">client.ticket</field>
+        <field name="res_model">design.request</field>
         <field name="view_mode">kanban,list,form,calendar,pivot,graph</field>
     </record>
     <!-- Menu Items -->

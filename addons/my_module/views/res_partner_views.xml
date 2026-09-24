@@ -1,6 +1,6 @@
 <odoo>
     <record id="view_partner_form_ticket_button" model="ir.ui.view">
-        <field name="name">res.partner.form.client.ticket</field>
+        <field name="name">res.partner.form.design.request</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">

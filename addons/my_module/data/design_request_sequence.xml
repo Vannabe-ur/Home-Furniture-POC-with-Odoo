@@ -1,8 +1,8 @@
 <odoo>
     <record id="seq_client_ticket" model="ir.sequence">
         <field name="name">Design Request Reference</field>
-        <field name="code">client.ticket</field>
-        <field name="prefix">CT/%(year)s/</field>
+        <field name="code">design.request</field>
+        <field name="prefix">DR/%(year)s/</field>
         <field name="padding">5</field>
         <field name="number_increment">1</field>
     </record>

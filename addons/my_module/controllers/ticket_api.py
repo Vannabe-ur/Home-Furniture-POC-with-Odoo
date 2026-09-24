@@ -47,7 +47,7 @@ class ClientTicketApi(http.Controller):
         except (TypeError, ValueError):
             limit = 50
 
-        tickets = request.env['client.ticket'].search(
+        tickets = request.env['design.request'].search(
             domain,
             limit=max(limit, 1),
             order='id desc',
@@ -65,7 +65,7 @@ class ClientTicketApi(http.Controller):
         csrf=False,
     )
     def get_ticket(self, ticket_id, **kwargs):
-        ticket = request.env['client.ticket'].browse(ticket_id).exists()
+        ticket = request.env['design.request'].browse(ticket_id).exists()
         if not ticket:
             return request.make_json_response(
                 {'error': 'Ticket not found'}, status=404
@@ -83,7 +83,7 @@ class ClientTicketApi(http.Controller):
     )
     def update_ticket(self, ticket_id, **kwargs):
         """Update a ticket while it is still in draft."""
-        ticket = request.env['client.ticket'].browse(ticket_id).exists()
+        ticket = request.env['design.request'].browse(ticket_id).exists()
         if not ticket:
             return request.make_json_response(
                 {'error': 'Ticket not found'}, status=404
@@ -229,7 +229,7 @@ class ClientTicketApi(http.Controller):
         values['requester_id'] = request.env.user.id
 
         try:
-            ticket = request.env['client.ticket'].create(values)
+            ticket = request.env['design.request'].create(values)
         except (AccessError, ValidationError) as error:
             return request.make_json_response(
                 {'error': str(error)}, status=400
@@ -247,7 +247,7 @@ class ClientTicketApi(http.Controller):
         csrf=False,
     )
     def submit_ticket(self, ticket_id, **kwargs):
-        ticket = request.env['client.ticket'].browse(ticket_id).exists()
+        ticket = request.env['design.request'].browse(ticket_id).exists()
         if not ticket:
             return request.make_json_response(
                 {'error': 'Ticket not found'}, status=404
