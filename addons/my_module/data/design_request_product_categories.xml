@@ -1,0 +1,14 @@
+<odoo>
+    <record id="product_category_design_interior" model="product.category">
+        <field name="name">Design Products / Interior</field>
+    </record>
+    <record id="product_category_design_exterior" model="product.category">
+        <field name="name">Design Products / Exterior</field>
+    </record>
+    <record id="product_category_design_outdoor" model="product.category">
+        <field name="name">Design Products / Outdoor</field>
+    </record>
+    <record id="product_category_design_services" model="product.category">
+        <field name="name">Design Services / Overhead</field>
+    </record>
+</odoo>

@@ -1,0 +1,65 @@
+id,name,default_code,type,is_storable,categ_id/id,sale_ok,purchase_ok,list_price,standard_price
+product_ilr_sfa_001,Upholstered Modular Sectional Sofa,ILR-SFA-001,consu,1,my_module.product_category_design_interior,1,1,1200,750
+product_ilr_chr_002,Accent Lounge Armchair,ILR-CHR-002,consu,1,my_module.product_category_design_interior,1,1,420,260
+product_ilr_tab_003,Solid Walnut Coffee Table,ILR-TAB-003,consu,1,my_module.product_category_design_interior,1,1,550,330
+product_ilr_med_004,Low-Profile Media & TV Console,ILR-MED-004,consu,1,my_module.product_category_design_interior,1,1,700,430
+product_ilr_bsk_005,Floating Modular Bookshelf Unit,ILR-BSK-005,consu,1,my_module.product_category_design_interior,1,1,680,400
+product_ibr_bed_001,King Size Platform Bed Frame,IBR-BED-001,consu,1,my_module.product_category_design_interior,1,1,1100,650
+product_ibr_nst_002,2-Drawer Minimalist Nightstand,IBR-NST-002,consu,1,my_module.product_category_design_interior,1,1,180,100
+product_ibr_drs_003,6-Drawer Double Dresser,IBR-DRS-003,consu,1,my_module.product_category_design_interior,1,1,650,390
+product_ibr_wrd_004,Built-in Wardrobe Closet System,IBR-WRD-004,consu,1,my_module.product_category_design_interior,1,1,1800,1100
+product_ibr_van_005,Makeup Vanity Table with Mirror,IBR-VAN-005,consu,1,my_module.product_category_design_interior,1,1,500,300
+product_ikt_cab_001,Base Kitchen Cabinet Module,IKT-CAB-001,consu,1,my_module.product_category_design_interior,1,1,450,270
+product_ikt_isl_002,Freestanding Kitchen Prep Island,IKT-ISL-002,consu,1,my_module.product_category_design_interior,1,1,900,540
+product_ikt_stl_003,Counter-Height Gas-Lift Bar Stool,IKT-STL-003,consu,1,my_module.product_category_design_interior,1,1,140,80
+product_ikt_pan_004,Tall Pull-Out Pantry Tower,IKT-PAN-004,consu,1,my_module.product_category_design_interior,1,1,700,420
+product_idr_tab_001,Extendable 8-Seater Dining Table,IDR-TAB-001,consu,1,my_module.product_category_design_interior,1,1,950,570
+product_idr_chr_002,Upholstered Dining Side Chair,IDR-CHR-002,consu,1,my_module.product_category_design_interior,1,1,180,105
+product_idr_sdb_003,Dining Room Sideboard Buffet Credenza,IDR-SDB-003,consu,1,my_module.product_category_design_interior,1,1,850,500
+product_idr_shv_004,Freestanding Wine Rack & Bar Cabinet,IDR-SHV-004,consu,1,my_module.product_category_design_interior,1,1,700,420
+product_ibt_van_001,Double Sink Floating Vanity Unit,IBT-VAN-001,consu,1,my_module.product_category_design_interior,1,1,950,570
+product_ibt_cab_002,Mirrored Medicine Wall Cabinet,IBT-CAB-002,consu,1,my_module.product_category_design_interior,1,1,260,150
+product_ibt_tow_003,Over-the-Toilet Storage Tower,IBT-TOW-003,consu,1,my_module.product_category_design_interior,1,1,390,230
+product_iho_dsk_001,Ergonomic L-Shaped Sit-to-Stand Desk,IHO-DSK-001,consu,1,my_module.product_category_design_interior,1,1,850,510
+product_iho_chr_002,High-Back Mesh Executive Office Chair,IHO-CHR-002,consu,1,my_module.product_category_design_interior,1,1,320,190
+product_iho_fil_003,Mobile Under-Desk Filing Cabinet,IHO-FIL-003,consu,1,my_module.product_category_design_interior,1,1,180,105
+product_ief_con_001,Narrow Foyer Console Table,IEF-CON-001,consu,1,my_module.product_category_design_interior,1,1,420,250
+product_ief_ben_002,Entryway Shoe Storage Bench,IEF-BEN-002,consu,1,my_module.product_category_design_interior,1,1,350,210
+product_ief_trc_003,Wall-Mounted Coat Rack & Key Hook,IEF-TRC-003,consu,1,my_module.product_category_design_interior,1,1,160,95
+product_ebf_lgt_001,Hardwired LED Sconce Wall Light,EBF-LGT-001,consu,1,my_module.product_category_design_exterior,1,1,180,100
+product_ebf_awn_002,Motorized Retractable Exterior Awning,EBF-AWN-002,consu,1,my_module.product_category_design_exterior,1,1,1500,900
+product_eme_mat_001,Heavy-Duty Weatherproof Coir Doormat,EME-MAT-001,consu,1,my_module.product_category_design_exterior,1,1,45,25
+product_eme_pln_002,Tall Architectural Concrete Planter,EME-PLN-002,consu,1,my_module.product_category_design_exterior,1,1,220,130
+product_ebt_set_001,3-Piece Bistro Table and Chair Set,EBT-SET-001,consu,1,my_module.product_category_design_exterior,1,1,480,290
+product_ebt_chr_002,All-Weather Wicker Hanging Egg Chair,EBT-CHR-002,consu,1,my_module.product_category_design_exterior,1,1,380,230
+product_ebt_rug_003,UV-Resistant Outdoor Area Rug,EBT-RUG-003,consu,1,my_module.product_category_design_exterior,1,1,260,155
+product_ert_sfa_001,Outdoor Sectional Sofa with Performance Fabric,ERT-SFA-001,consu,1,my_module.product_category_design_exterior,1,1,1600,960
+product_ert_fir_002,Propane Gas Fire Pit Table,ERT-FIR-002,consu,1,my_module.product_category_design_exterior,1,1,900,540
+product_ert_bar_003,Weather-Resistant Rooftop Bar Counter,ERT-BAR-003,consu,1,my_module.product_category_design_exterior,1,1,1400,840
+product_eew_tre_001,Wall-Mounted Garden Trellis Framework,EEW-TRE-001,consu,1,my_module.product_category_design_exterior,1,1,300,180
+product_eew_num_002,Backlit Floating Modern House Numbers,EEW-NUM-002,consu,1,my_module.product_category_design_exterior,1,1,160,95
+product_epa_sto_001,Heavy-Duty Metal Lockable Tool Cabinet,EPA-STO-001,consu,1,my_module.product_category_design_exterior,1,1,500,300
+product_epa_rack_002,Wall-Mounted Multi-Bike Parking Rack,EPA-RCK-002,consu,1,my_module.product_category_design_exterior,1,1,280,165
+product_obg_ben_001,Teak Wood Garden Bench,OBG-BEN-001,consu,1,my_module.product_category_design_outdoor,1,1,450,270
+product_obg_gaz_002,Aluminum Hardtop Garden Gazebo Pavilion,OBG-GAZ-002,consu,1,my_module.product_category_design_outdoor,1,1,2200,1320
+product_obg_lgt_003,Solar-Powered Path Stake Lights,OBG-LGT-003,consu,1,my_module.product_category_design_outdoor,1,1,180,105
+product_osp_lun_001,Adjustable Poolside Chaise Lounge Chair,OSP-LUN-001,consu,1,my_module.product_category_design_outdoor,1,1,320,190
+product_osp_umb_002,Heavy-Duty Cantilever Patio Umbrella,OSP-UMB-002,consu,1,my_module.product_category_design_outdoor,1,1,520,310
+product_osp_tab_003,Waterproof Side Drink Table,OSP-TAB-003,consu,1,my_module.product_category_design_outdoor,1,1,120,70
+product_opt_din_001,9-Piece Outdoor Dining Suite,OPT-DIN-001,consu,1,my_module.product_category_design_outdoor,1,1,1800,1080
+product_opt_box_002,Waterproof Resin Deck Storage Box,OPT-BOX-002,consu,1,my_module.product_category_design_outdoor,1,1,300,180
+product_ool_day_001,Outdoor Canopy Daybed with Privacy Curtains,OOL-DAY-001,consu,1,my_module.product_category_design_outdoor,1,1,1500,900
+product_ool_heat_002,Commercial Propane Patio Heater Tower,OOL-HTR-002,consu,1,my_module.product_category_design_outdoor,1,1,650,390
+product_ood_tab_001,Polywood Weatherproof Dining Table,OOD-TAB-001,consu,1,my_module.product_category_design_outdoor,1,1,750,450
+product_ood_ben_002,Matching Backless Outdoor Dining Bench,OOD-BEN-002,consu,1,my_module.product_category_design_outdoor,1,1,320,190
+product_ook_grl_001,Built-in Stainless Steel Gas Grill Station,OOK-GRL-001,consu,1,my_module.product_category_design_outdoor,1,1,2400,1440
+product_ook_frg_002,Outdoor-Rated Compact Under-Counter Refrigerator,OOK-FRG-002,consu,1,my_module.product_category_design_outdoor,1,1,1300,780
+product_ola_brd_001,Weathered Steel Landscape Edging Borders,OLA-BRD-001,consu,1,my_module.product_category_design_outdoor,1,1,90,50
+product_ola_ftn_002,Recirculating Stone Garden Water Fountain,OLA-FTN-002,consu,1,my_module.product_category_design_outdoor,1,1,600,360
+service_installation_001,Professional Installation Service,SVC-INS-001,service,0,my_module.product_category_design_services,1,0,250,120
+service_delivery_002,Delivery and Placement Service,SVC-DLV-002,service,0,my_module.product_category_design_services,1,0,80,40
+service_modification_003,Furniture Modification Service,SVC-MOD-003,service,0,my_module.product_category_design_services,1,0,300,150
+service_measurement_004,Site Measurement Service,SVC-MSR-004,service,0,my_module.product_category_design_services,1,0,120,60
+service_consultation_005,Custom Design Consultation Service,SVC-DSN-005,service,0,my_module.product_category_design_services,1,0,200,100
+service_blueprint_006,Architectural Blueprint and Designer Service Fee,SVC-BLU-006,service,0,my_module.product_category_design_services,1,0,800,400
+

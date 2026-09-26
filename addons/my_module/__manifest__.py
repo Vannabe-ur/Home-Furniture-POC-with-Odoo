@@ -11,6 +11,8 @@
         'data/design_request_sequence.xml',
         'data/bill_of_quantity_sequence.xml',
         'data/design_request_projects.xml',
+        'data/design_request_product_categories.xml',
+        'data/product.template.csv',
         'report/design_request_report.xml',
         'report/bill_of_quantity_report.xml',
         'views/design_request_views_ver2.xml',

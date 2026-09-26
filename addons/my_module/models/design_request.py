@@ -483,10 +483,8 @@ class ClientTicket(models.Model):
             ], limit=1)
             if rec.project_task_id and done_stage:
                 rec.project_task_id.write({'stage_id': done_stage.id})
-            rec._send_template_email(
-                'my_module.mail_template_ticket_completed',
-                rec.design_manager_id,
-                f"Completion email sent to Design Manager {rec.design_manager_id.name}.",
+            rec._post_template_to_chatter(
+                'my_module.mail_template_ticket_completed'
             )
 
     def action_close(self):
