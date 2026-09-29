@@ -291,11 +291,10 @@ class ClientTicket(models.Model):
         if not self.require_date or self.state in ('completed', 'closed', 'cancel'):
             return False
 
+        # Compare the complete deadline, not only its calendar date. This
+        # makes a request overdue immediately after its required time passes.
         require_datetime = fields.Datetime.to_datetime(self.require_date)
-        require_date_local = fields.Datetime.context_timestamp(
-            self, require_datetime
-        ).date()
-        return require_date_local < fields.Date.context_today(self)
+        return require_datetime < fields.Datetime.now()
 
     @api.onchange('partner_id')
     def _onchange_partner_id(self):

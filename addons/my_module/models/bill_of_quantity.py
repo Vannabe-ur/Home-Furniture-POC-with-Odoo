@@ -1,5 +1,5 @@
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 
 class BillOfQuantity(models.Model):
@@ -103,6 +103,10 @@ class BillOfQuantity(models.Model):
                 raise UserError('Only draft BoQs can be submitted.')
             if not boq.line_ids:
                 raise UserError('Add at least one BoQ item before submitting.')
+            if not boq.attachment:
+                raise UserError(
+                    'Please attach the blueprint or design file before submitting the BoQ.'
+                )
             if not boq.design_manager_id:
                 raise UserError('Please select a Design Manager before submitting the BoQ.')
             boq.write({'state': 'submitted'})
@@ -238,6 +242,14 @@ class BillOfQuantity(models.Model):
 
     def action_create_sale_quotation(self):
         self.ensure_one()
+        if (
+            self.env.user.has_group('my_module.group_client_ticket_designer')
+            and not self.env.user.has_group('my_module.group_client_ticket_manager')
+            and not self.env.user.has_group('base.group_system')
+        ):
+            raise AccessError(
+                'Only Design Managers or Administrators can create Sale Quotations from a BoQ.'
+            )
         if self.state != 'done':
             raise UserError('A sale quotation can only be created when the BoQ is Done.')
         if not self.partner_id:
@@ -387,11 +399,21 @@ class BillOfQuantityLine(models.Model):
     _order = 'sequence, id'
 
     sequence = fields.Integer(default=10)
+    display_type = fields.Selection(
+        [('line_section', 'Section'), ('line_note', 'Note')],
+        string='Display Type',
+    )
     boq_id = fields.Many2one('client.bill_of_quantity', string='BoQ', required=True, ondelete='cascade')
     date = fields.Date(string='Date', default=fields.Date.context_today, required=True)
     job_type = fields.Selection([('material', 'Material'), ('service', 'Service / Overhead'), ('labor', 'Labor')], string='Job Type', required=True, default='material')
     product_id = fields.Many2one('product.product', string='Product')
     description = fields.Char(string='Description')
+    # Odoo's product-label line widget expects the editable line text in a
+    # field named `name`. Keep it linked to the existing description column so
+    # reports, emails, and quotations continue using the same stored value.
+    name = fields.Char(
+        string='Description', related='description', readonly=False, store=True,
+    )
     quantity = fields.Float(string='Planned Qty', default=1.0, required=True)
     uom_id = fields.Many2one('uom.uom', string='UoM')
     sale_price = fields.Monetary(string='Sale Price')
@@ -414,8 +436,8 @@ class BillOfQuantityLine(models.Model):
         return super().write(vals)
 
     def unlink(self):
-        if self.filtered(lambda line: line.boq_id.state in ('done', 'cancel')):
-            raise UserError('Items in a Done or Cancelled BoQ cannot be deleted.')
+        if self.filtered(lambda line: line.boq_id.state != 'draft'):
+            raise UserError('BoQ items can only be deleted while the BoQ is in Draft.')
         return super().unlink()
 
     @api.depends('quantity', 'sale_price')
@@ -426,7 +448,8 @@ class BillOfQuantityLine(models.Model):
     @api.onchange('product_id')
     def _onchange_product_id(self):
         if self.product_id:
-            self.description = self.product_id.display_name
+            # Use the product's Internal Notes as the BoQ line description.
+            self.description = self.product_id.product_tmpl_id.description or False
             self.uom_id = self.product_id.uom_id
             self.sale_price = self.product_id.lst_price
 
@@ -466,6 +489,19 @@ class BillOfQuantityHistory(models.Model):
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if (
+            self.env.user.has_group('my_module.group_client_ticket_designer')
+            and not self.env.user.has_group('my_module.group_client_ticket_manager')
+            and not self.env.user.has_group('base.group_system')
+        ):
+            raise AccessError(
+                'Designers are not allowed to create Sale Orders. '
+                'A Design Manager must create the quotation from the completed BoQ.'
+            )
+        return super().create(vals_list)
 
     boq_id = fields.Many2one(
         'client.bill_of_quantity', string='BoQ', ondelete='restrict', copy=False,

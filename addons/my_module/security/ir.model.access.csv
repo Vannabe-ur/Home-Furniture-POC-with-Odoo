@@ -8,7 +8,7 @@ access_client_ticket_assign_warning_admin,design.request assignment warning admi
 access_bill_of_quantity_manager,bill of quantity manager,model_client_bill_of_quantity,group_client_ticket_manager,1,1,1,1
 access_bill_of_quantity_designer,bill of quantity designer,model_client_bill_of_quantity,group_client_ticket_designer,1,1,1,0
 access_bill_of_quantity_line_manager,bill of quantity line manager,model_client_bill_of_quantity_line,group_client_ticket_manager,1,1,1,1
-access_bill_of_quantity_line_designer,bill of quantity line designer,model_client_bill_of_quantity_line,group_client_ticket_designer,1,1,1,0
+access_bill_of_quantity_line_designer,bill of quantity line designer,model_client_bill_of_quantity_line,group_client_ticket_designer,1,1,1,1
 access_bill_of_quantity_admin,bill of quantity administrator,model_client_bill_of_quantity,base.group_system,1,1,1,1
 access_bill_of_quantity_line_admin,bill of quantity line administrator,model_client_bill_of_quantity_line,base.group_system,1,1,1,1
 access_bill_of_quantity_history_manager,bill of quantity history manager,model_client_bill_of_quantity_history,group_client_ticket_manager,1,1,1,1

@@ -97,10 +97,10 @@
                     <button name="action_submit" type="object" string="Resubmit" class="oe_highlight" invisible="state != 'draft' or version &lt;= 1"/>
                     <button name="action_approve" type="object" string="To Approve" class="oe_highlight" groups="base.group_system,my_module.group_client_ticket_manager" invisible="state != 'submitted'"/>
                     <button name="action_reject" type="object" string="To Rejected" class="btn-danger" groups="base.group_system,my_module.group_client_ticket_manager" invisible="state != 'submitted'" confirm="Are you sure you want to reject this BoQ? Please make sure the rejection feedback is filled in."/>
-                    <button name="action_send_customer_review" type="object" string="Send to Customer" class="oe_highlight" groups="base.group_system,my_module.group_client_ticket_manager" invisible="state != 'approved'"/>
+                    <button name="action_send_customer_review" type="object" string="Send to Customer" class="oe_highlight" groups="base.group_system,my_module.group_client_ticket_manager,my_module.group_client_ticket_designer" invisible="state != 'approved'"/>
                     <button name="action_customer_approve" type="object" string="Customer Approval" class="oe_highlight" invisible="state != 'customer_review'"/>
                     <button name="action_done" type="object" string="Done" class="oe_highlight" invisible="state != 'customer_approved'"/>
-                    <button name="action_create_sale_quotation" type="object" string="Create Sale Quotation" class="oe_highlight" invisible="state != 'done'"/>
+                    <button name="action_create_sale_quotation" type="object" string="Create Sale Quotation" class="oe_highlight" groups="base.group_system,my_module.group_client_ticket_manager" invisible="state != 'done'"/>
                     <button name="action_cancel" type="object" string="Cancel" class="btn-danger" invisible="state in ('submitted', 'done', 'cancel')" confirm="Are you sure you want to cancel this BoQ?"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,customer_review,customer_approved,done,cancel"/>
                 </header>
@@ -130,10 +130,20 @@
                         </group>
                     </group>
                     <notebook><page string="BoQ Items">
-                        <field name="line_ids" readonly="state not in ('draft', 'submitted')">
-                            <list editable="bottom">
-                                <field name="date"/><field name="job_type"/><field name="product_id"/>
-                                <field name="description"/><field name="quantity" string="Planned Qty"/>
+                        <field name="line_ids"
+                               widget="product_label_section_and_note_field_o2m"
+                               mode="list,kanban"
+                               readonly="state not in ('draft', 'submitted')">
+                            <list editable="bottom" delete="1">
+                                <field name="display_type" column_invisible="1"/>
+                                <field name="sequence" widget="handle"/>
+                                <field name="date"/>
+                                <field name="job_type"/>
+                                <field name="product_id"
+                                       widget="product_label_section_and_note_field"
+                                       options="{'show_label_warning': True}"/>
+                                <field name="name" widget="section_and_note_text" optional="show"/>
+                                <field name="quantity" string="Planned Qty"/>
                                 <field name="uom_id"/><field name="sale_price"/><field name="subtotal" readonly="1"/>
                             </list>
                         </field>

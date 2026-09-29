@@ -218,3 +218,177 @@ A Sale Quotation can be created only after the BoQ reaches **Done**. The action:
 
 The quotation provides smart buttons back to the related BoQ and Design
 Request. The BoQ provides a smart button to its related quotations.
+
+---
+
+## Inventory: Products and Operations
+
+The Inventory part of this project is used as the product master for the
+design and quotation workflow. Products are created in Odoo's standard
+**Product** model and can then be selected on BoQ lines. The catalog is loaded
+from `addons/my_module/data/product.template.csv` when the module is installed
+or upgraded.
+
+### Product structure
+
+The catalog contains two practical product types:
+
+| Product type | Odoo configuration | Purpose in this project |
+|---|---|---|
+| Physical design product | Consumable with inventory tracking enabled | Furniture, fixtures, outdoor items, and other supplied items |
+| Service product | Service with inventory tracking disabled | Installation, delivery, modification, measurement, consultation, and blueprint/designer fees |
+
+Physical products are grouped into Interior, Exterior, and Outdoor categories.
+Service products are grouped under Design Services / Overhead. Each product has
+a product name, internal reference, category, sales price, and internal cost.
+The reference follows the catalog format:
+
+```text
+[Zone][Area]-[Category]-[Sequence]
+```
+
+Examples include `ILR-SFA-001` for an interior living-room sectional sofa,
+`EBF-LGT-001` for an exterior facade light, and `SVC-INS-001` for an
+installation service.
+
+### Inventory product configuration
+
+The catalog CSV maps directly to Odoo's `product.template` model. The main
+configuration columns are:
+
+| CSV field | Inventory meaning | Example |
+|---|---|---|
+| `name` | Product name shown to users | Upholstered Modular Sectional Sofa |
+| `default_code` | Internal Reference / SKU used for searching and identification | `ILR-SFA-001` |
+| `type` | Product type: `consu` for physical items or `service` for services | `consu` |
+| `is_storable` | Enables inventory quantity tracking for physical products | `1` for physical items, `0` for services |
+| `categ_id/id` | Inventory product category | Interior, Exterior, Outdoor, or Design Services / Overhead |
+| `sale_ok` | Allows the product to be used in sales and quotations | `1` |
+| `purchase_ok` | Allows the product to be selected for purchasing | `1` for physical products, `0` for services |
+| `list_price` | Public sales price and default BoQ sales price | Demo selling price |
+| `standard_price` | Internal cost used as the cost reference | Demo internal cost |
+
+The prices in this academic project are demonstration values. They can be
+changed from the product form in Inventory without changing the reference-code
+system.
+
+### Internal Reference code explained
+
+The internal reference uses three segments and four logical parts:
+
+```text
+ZZZ-CCC-NNN
+│   │   └── Three-digit sequence number
+│   └────── Three-letter product category
+└────────── Three-character zone and area code
+```
+
+The first character identifies the broad design zone:
+
+| Letter | Zone |
+|---|---|
+| `I` | Interior |
+| `E` | Exterior |
+| `O` | Outdoor |
+
+The next two characters identify the design area. The complete three-character
+prefix is shown below because some two-letter area codes are reused in another
+zone:
+
+| Prefix | Design area |
+|---|---|
+| `ILR` | Interior / Living Room |
+| `IBR` | Interior / Bedroom |
+| `IKT` | Interior / Kitchen |
+| `IDR` | Interior / Dining Room |
+| `IBT` | Interior / Bathroom |
+| `IHO` | Interior / Home Office |
+| `IEF` | Interior / Entrance / Foyer |
+| `EBF` | Exterior / Building Facade |
+| `EME` | Exterior / Main Entrance |
+| `EBT` | Exterior / Balcony / Terrace |
+| `ERT` | Exterior / Rooftop |
+| `EEW` | Exterior / Exterior Walls |
+| `EPA` | Exterior / Parking Area |
+| `OBG` | Outdoor / Backyard / Garden |
+| `OSP` | Outdoor / Swimming Pool |
+| `OPT` | Outdoor / Patio |
+| `OOL` | Outdoor / Outdoor Living Area |
+| `OOD` | Outdoor / Outdoor Dining Area |
+| `OOK` | Outdoor / Outdoor Kitchen |
+| `OLA` | Outdoor / Landscape Area |
+
+For example, `ILR` means **Interior + Living Room**, while `OBG` means
+**Outdoor + Backyard / Garden**. The area code is followed by a three-letter
+category abbreviation describing the product, such as `SFA` for sectional
+sofa, `CHR` for chair, `TAB` for table, `CAB` for cabinet, `LGT` for light,
+or `GRL` for grill. The final three digits identify the item sequence within
+the catalog, such as `001`, `002`, or `003`. An area abbreviation may be
+reused in different zones when the full three-character prefix remains
+different; for example, `IBT` is Interior / Bathroom and `EBT` is Exterior /
+Balcony / Terrace.
+
+Service products use the same readable internal-reference idea with the
+`SVC` prefix:
+
+| Code | Service |
+|---|---|
+| `SVC-INS` | Installation |
+| `SVC-DLV` | Delivery and placement |
+| `SVC-MOD` | Furniture modification |
+| `SVC-MSR` | Site measurement |
+| `SVC-DSN` | Design consultation |
+| `SVC-BLU` | Architectural blueprint and designer service fee |
+
+The code is an internal business identifier, not an Odoo database ID. It helps
+users search, classify, quote, and report products consistently across
+Inventory, BoQ, Sales, and Invoicing.
+
+### How products are used in operations
+
+The operational flow is:
+
+```text
+Product catalog
+    -> BoQ line selection
+    -> Cost and selling-price calculation
+    -> BoQ approval and customer review
+    -> Sale quotation
+    -> Invoice data from the sale order
+```
+
+1. Products are maintained in Inventory or loaded from the module catalog.
+   The product's sales price is used as the default BoQ line price when a
+   product is selected.
+
+2. A designer selects products on BoQ lines and classifies each line as
+   Material, Service / Overhead, or Labor. The selected product supplies the
+   description and unit of measure. Quantity multiplied by sale price produces
+   the line subtotal.
+
+3. The BoQ calculates material cost, service/overhead cost, labor cost, margin,
+   and total estimate cost. A blueprint or design file must be attached before
+   the BoQ can be submitted.
+
+4. After manager approval and customer approval, the completed BoQ creates a
+   Sale Quotation. The quotation receives the BoQ products as order lines. A
+   separate service product named `BOQ-MARGIN` is used for the calculated margin
+   when a margin exists.
+
+5. When the quotation is invoiced, the related BoQ reference, margin, and total
+   cost are carried into the invoice information provided by this module.
+
+### Inventory scope of this academic project
+
+The current implementation demonstrates product master data, product
+categorization, BoQ costing, service charges, quotation creation, and the link
+from quotations to invoices. It does not currently implement a complete stock
+operations cycle. In particular, it does not automatically create or validate
+receipts, delivery orders, stock transfers, purchase orders, manufacturing
+orders, or real-time stock replenishment rules.
+
+Therefore, adding a product to the catalog makes it available for selection in
+the BoQ and Sales applications; it does not mean that physical stock has been
+received or delivered. Those operations would require stock locations,
+warehouses, routes, vendors, replenishment rules, and validated inventory
+pickings in a later expansion.
