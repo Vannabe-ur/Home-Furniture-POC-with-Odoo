@@ -118,13 +118,16 @@
                             <field name="request_type" readonly="state in ('closed', 'cancel')"/>
                             <field name="interior_design_area" string="Design Area"
                                    readonly="state in ('closed', 'cancel')"
-                                   invisible="request_type != 'interior'"/>
+                                   invisible="request_type not in (False, 'interior')"
+                                   placeholder="Select an interior design area"/>
                             <field name="exterior_design_area" string="Design Area"
                                    readonly="state in ('closed', 'cancel')"
-                                   invisible="request_type != 'exterior'"/>
+                                   invisible="request_type != 'exterior'"
+                                   placeholder="Select an exterior design area"/>
                             <field name="outdoor_design_area" string="Design Area"
                                    readonly="state in ('closed', 'cancel')"
-                                   invisible="request_type != 'outdoor'"/>
+                                   invisible="request_type != 'outdoor'"
+                                   placeholder="Select an outdoor design area"/>
                             <field name="phone" readonly="state in ('closed', 'cancel')"/>
                             <field name="email" readonly="state in ('closed', 'cancel')"/>
                             <field name="max_budget" readonly="state in ('closed', 'cancel')"/>
