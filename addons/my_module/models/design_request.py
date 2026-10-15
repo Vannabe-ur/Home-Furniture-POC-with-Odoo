@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 from odoo import models, fields, api
 from odoo.exceptions import UserError
@@ -68,7 +68,7 @@ LEGACY_DESIGN_AREA_MAP = {
     'patio_outdoor_living': 'outdoor_living_area',
 }
 
-class ClientTicket(models.Model):
+class DesignRequest(models.Model):
     _name = 'design.request'
     # Keep the existing PostgreSQL table so a module upgrade can retain
     # existing Design Request records while the Odoo technical model name changes.
@@ -224,6 +224,9 @@ class ClientTicket(models.Model):
     )
     boq_count = fields.Integer(string="BoQ Count", compute='_compute_boq_count')
     sale_order_count = fields.Integer(string="Sales", compute='_compute_sale_order_count')
+    project_task_count = fields.Integer(
+        string="Project Task Count", compute='_compute_project_task_count'
+    )
 
     # Tabs field
     description = fields.Text(string="Description")
@@ -250,6 +253,11 @@ class ClientTicket(models.Model):
                 ('client_ticket_id', '=', ticket.id),
             ])
 
+    @api.depends('project_task_id')
+    def _compute_project_task_count(self):
+        for ticket in self:
+            ticket.project_task_count = 1 if ticket.project_task_id else 0
+
     def action_view_boqs(self):
         self.ensure_one()
         return {
@@ -270,6 +278,18 @@ class ClientTicket(models.Model):
             'view_mode': 'list,form',
             'domain': [('client_ticket_id', '=', self.id)],
             'context': {'default_client_ticket_id': self.id},
+        }
+
+    def action_view_project_task(self):
+        self.ensure_one()
+        if not self.project_task_id:
+            return False
+        return {
+            'name': 'Project Task',
+            'type': 'ir.actions.act_window',
+            'res_model': 'project.task',
+            'view_mode': 'form',
+            'res_id': self.project_task_id.id,
         }
 
     def write(self, vals):
@@ -305,10 +325,6 @@ class ClientTicket(models.Model):
 
         self.phone = self.partner_id.phone
         self.email = self.partner_id.email
-
-        # If this customer has a linked user, use them as the default manager.
-        if self.partner_id.user_id:
-            self.design_manager_id = self.partner_id.user_id
 
     def action_reset_draft(self):
         for rec in self:
@@ -382,10 +398,25 @@ class ClientTicket(models.Model):
                     "Please select a Project for this design request before assignment."
                 )
             if not self.env.context.get('skip_assignment_warning'):
+                required_datetime = fields.Datetime.to_datetime(rec.require_date)
+                required_local_datetime = fields.Datetime.context_timestamp(
+                    rec, required_datetime
+                )
+                local_day_start = required_local_datetime.replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                local_day_end = local_day_start + timedelta(days=1)
+                utc_day_start = local_day_start.astimezone(timezone.utc).replace(
+                    tzinfo=None
+                )
+                utc_day_end = local_day_end.astimezone(timezone.utc).replace(
+                    tzinfo=None
+                )
                 conflicting_requests = self.search([
                     ('id', '!=', rec.id),
                     ('designer_id', '=', rec.designer_id.id),
-                    ('require_date', '=', rec.require_date),
+                    ('require_date', '>=', fields.Datetime.to_string(utc_day_start)),
+                    ('require_date', '<', fields.Datetime.to_string(utc_day_end)),
                     ('state', 'in', ('approved', 'assigned', 'in_progress')),
                 ]) if rec.require_date else self.browse()
                 if conflicting_requests:
@@ -396,8 +427,8 @@ class ClientTicket(models.Model):
                     wizard = self.env['design.request.assign.warning'].create({
                         'ticket_id': rec.id,
                         'message': (
-                            f"Designer {rec.designer_id.name} is already busy with "
-                            f"another client on {rec.require_date}.\n\n"
+                            f"Designer {rec.designer_id.name} already has another "
+                            "scheduled request on the same day.\n\n"
                             f"Conflicting Design Request: {conflict_text}\n\n"
                             "Please check with the designer first."
                         ),

@@ -56,6 +56,18 @@ product_ook_grl_001,Built-in Stainless Steel Gas Grill Station,OOK-GRL-001,consu
 product_ook_frg_002,Outdoor-Rated Compact Under-Counter Refrigerator,OOK-FRG-002,consu,1,my_module.product_category_design_outdoor,1,1,1300,780
 product_ola_brd_001,Weathered Steel Landscape Edging Borders,OLA-BRD-001,consu,1,my_module.product_category_design_outdoor,1,1,90,50
 product_ola_ftn_002,Recirculating Stone Garden Water Fountain,OLA-FTN-002,consu,1,my_module.product_category_design_outdoor,1,1,600,360
+product_ola_roc_003,Decorative Natural River Pebbles,OLA-ROC-003,consu,1,my_module.product_category_design_outdoor,1,1,75,40
+product_ola_roc_004,Polished Black Lava Landscape Rock,OLA-ROC-004,consu,1,my_module.product_category_design_outdoor,1,1,95,52
+product_ola_roc_005,White Marble Decorative Garden Stones,OLA-ROC-005,consu,1,my_module.product_category_design_outdoor,1,1,110,60
+product_ola_bld_001,Modern Basalt Boulder Accent Set,OLA-BLD-001,consu,1,my_module.product_category_design_outdoor,1,1,280,160
+product_ola_bld_002,Granite Sculpture Garden Accent Rock,OLA-BLD-002,consu,1,my_module.product_category_design_outdoor,1,1,420,250
+product_ola_pln_001,Geometric Concrete Landscape Planter,OLA-PLN-001,consu,1,my_module.product_category_design_outdoor,1,1,240,140
+product_ola_pln_002,Matte Black Fiberglass Modern Planter,OLA-PLN-002,consu,1,my_module.product_category_design_outdoor,1,1,320,190
+product_ola_pln_003,Corten Steel Sculptural Planter,OLA-PLN-003,consu,1,my_module.product_category_design_outdoor,1,1,480,285
+product_ola_plt_001,Architectural Bird of Paradise Plant,OLA-PLT-001,consu,1,my_module.product_category_design_outdoor,1,1,180,100
+product_ola_plt_002,Decorative Olive Tree for Landscape Design,OLA-PLT-002,consu,1,my_module.product_category_design_outdoor,1,1,260,150
+product_ola_plt_003,Ornamental Fountain Grass Plant,OLA-PLT-003,consu,1,my_module.product_category_design_outdoor,1,1,85,45
+product_ola_plt_004,Modern Agave Accent Plant,OLA-PLT-004,consu,1,my_module.product_category_design_outdoor,1,1,125,68
 service_installation_001,Professional Installation Service,SVC-INS-001,service,0,my_module.product_category_design_services,1,0,250,120
 service_delivery_002,Delivery and Placement Service,SVC-DLV-002,service,0,my_module.product_category_design_services,1,0,80,40
 service_modification_003,Furniture Modification Service,SVC-MOD-003,service,0,my_module.product_category_design_services,1,0,300,150

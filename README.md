@@ -114,7 +114,7 @@ Where Business Logic lives in Odoo code:
 **RESTART:**
 
 ```
-docker compose exec odoo odoo -d luma -u my_module --stop-after-init && docker compose restart odvoo
+docker compose exec odoo odoo -d luma -u my_module --stop-after-init && docker compose restart odoo
 ```
 
 ---
@@ -263,6 +263,7 @@ configuration columns are:
 | `type` | Product type: `consu` for physical items or `service` for services | `consu` |
 | `is_storable` | Enables inventory quantity tracking for physical products | `1` for physical items, `0` for services |
 | `categ_id/id` | Inventory product category | Interior, Exterior, Outdoor, or Design Services / Overhead |
+| `uom_id` | Sales and BoQ unit of measure | `Unit(s)` or `m³` |
 | `sale_ok` | Allows the product to be used in sales and quotations | `1` |
 | `purchase_ok` | Allows the product to be selected for purchasing | `1` for physical products, `0` for services |
 | `list_price` | Public sales price and default BoQ sales price | Demo selling price |
@@ -322,11 +323,23 @@ For example, `ILR` means **Interior + Living Room**, while `OBG` means
 **Outdoor + Backyard / Garden**. The area code is followed by a three-letter
 category abbreviation describing the product, such as `SFA` for sectional
 sofa, `CHR` for chair, `TAB` for table, `CAB` for cabinet, `LGT` for light,
-or `GRL` for grill. The final three digits identify the item sequence within
+or `GRL` for grill, `ROC` for decorative rock, `BLD` for boulder, `PLN` for
+planter, or `PLT` for plant. The final three digits identify the item sequence within
 the catalog, such as `001`, `002`, or `003`. An area abbreviation may be
 reused in different zones when the full three-character prefix remains
 different; for example, `IBT` is Interior / Bathroom and `EBT` is Exterior /
 Balcony / Terrace.
+
+Landscape products use the `OLA` prefix. For example, the catalog includes
+`OLA-ROC-003` for decorative natural river pebbles, `OLA-PLN-001` for a
+geometric concrete planter, and `OLA-PLT-001` for an architectural bird of
+paradise plant. All of these products are physical consumables in the Outdoor
+inventory category and can be selected on BoQ lines for Landscape Area designs.
+
+Landscape decorative rocks (`OLA-ROC-003` through `OLA-ROC-005`) use the
+standard Odoo cubic-metre UoM for both sales and purchasing, so their list and
+cost prices are per m³. Boulders, planters, and plants use `Unit(s)` because
+they are supplied as individual items.
 
 Service products use the same readable internal-reference idea with the
 `SVC` prefix:

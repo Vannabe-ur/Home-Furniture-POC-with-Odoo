@@ -1,0 +1,20 @@
+<odoo>
+    <record id="project_view_kanban_design_manager" model="ir.ui.view">
+        <field name="name">project.project.kanban.design.manager</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project_kanban"/>
+        <field name="arch" type="xml">
+            <field name="sequence" position="after">
+                <field name="design_manager_names"/>
+            </field>
+            <xpath expr="//div[hasclass('o_project_kanban_body')]" position="inside">
+                <div t-if="record.design_manager_names.value"
+                     class="text-muted d-flex align-items-baseline">
+                    <span class="fa fa-user me-2" aria-label="Design Manager" title="Design Manager"></span>
+                    <span class="me-1">Design Manager:</span>
+                    <field class="text-truncate" name="design_manager_names"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
